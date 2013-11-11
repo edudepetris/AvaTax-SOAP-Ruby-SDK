@@ -18,9 +18,11 @@ module AvaTax
         @machine = machine == nil ? "" : machine        
        
         #Set @def_locn to the Avatax-x.x.x gem install library. This enables the ruby programs to
-        #find other objects that it needs.       
-        @def_locn = 'C:\RailsInstaller\Ruby1.9.3\lib\ruby\gems\1.9.1\gems\Avatax_AddressService-1.0.2\lib'
-        
+        #find other objects that it needs.
+        spec = Gem::Specification.find_by_name("Avatax_AddressService")
+        gem_root = spec.gem_dir
+        @def_locn = gem_root + "/lib"
+               
         #Open Avatax Error Log 
         @log = File.new(@def_locn + '\address_log.txt', "w")
         @log.puts "#{Time.now}: Address service started"

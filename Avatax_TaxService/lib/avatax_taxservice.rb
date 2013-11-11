@@ -19,8 +19,10 @@ module AvaTax
         @machine = machine == nil ? "" : machine         
         
         #Set @def_locn to the Avatax-x.x.x gem install library. This enables the ruby programs to
-        #find other objects that it needs.       
-        @def_locn = 'C:\Ruby193\lib\ruby\gems\1.9.1\gems\Avatax_TaxService-1.0.0\lib'
+        #find other objects that it needs.
+        spec = Gem::Specification.find_by_name("Avatax_TaxService")
+        gem_root = spec.gem_dir
+        @def_locn = gem_root + "/lib"               
                 
         #Header for response data
         @responsetime_hdr = "  (User)    (System)    (Total)    (Real)" 
