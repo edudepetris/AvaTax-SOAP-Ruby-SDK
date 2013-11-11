@@ -1,0 +1,26 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://avatax.avalara.com/services">
+   <soapenv:Header>
+      <ser:Profile>
+         <ser:Name><%= @name %></ser:Name>
+         <ser:Client><%= @clientname %></ser:Client>
+         <ser:Adapter><%= @adapter %></ser:Adapter>
+         <ser:Machine><%= @machine %></ser:Machine>
+      </ser:Profile>
+   </soapenv:Header>
+   <soapenv:Body>
+      <ser:PostTax>
+         <ser:PostTaxRequest>
+            <ser:DocId><%= @docid %></ser:DocId>
+            <ser:CompanyCode><%= @companycode %></ser:CompanyCode>
+            <ser:DocType><%= @doctype %></ser:DocType>
+            <ser:DocCode><%= @doccode %></ser:DocCode>
+            <ser:DocDate><%= @docdate %></ser:DocDate>
+            <ser:TotalAmount><%= @totalamount %></ser:TotalAmount>
+            <ser:TotalTax><%= @totaltax %></ser:TotalTax>
+            <ser:HashCode><%= @hashcode %></ser:HashCode>
+            <ser:Commit><%= @commit %></ser:Commit>
+            <ser:NewDocCode><%= @newdoccode %></ser:NewDocCode>
+         </ser:PostTaxRequest>
+      </ser:PostTax>
+   </soapenv:Body>
+</soapenv:Envelope>
