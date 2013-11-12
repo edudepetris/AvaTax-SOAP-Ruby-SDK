@@ -5,8 +5,8 @@ require 'green_shoes'
 
 #Create an address service instance
 #Call the gettax service
-username = 'grahamw'
-password = 'Meb4vffu$'
+username = 'USERNAME'
+password = 'PASSWORD'
 name = 'Avalara Inc.'
 clientname = 'MyShoppingCart'
 adapter = 'Avatax SDK for Ruby 1.0.1'
