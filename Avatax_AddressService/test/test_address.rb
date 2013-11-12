@@ -3,6 +3,18 @@ require 'avatax_addressservice'
 #require green_shoes for the GUI
 require 'green_shoes'
 
+<<<<<<< HEAD
+=======
+#Create an address service instance
+#Call the gettax service
+username = 'USERNAME'
+password = 'PASSWORD'
+name = 'Avalara Inc.'
+clientname = 'MyShoppingCart'
+adapter = 'Avatax SDK for Ruby 1.0.1'
+machine = 'Lenovo W520 Windows 7'
+AddrService = AvaTax::AddressService.new(username,password,name,clientname,adapter,machine) 
+>>>>>>> 2e5fce8582772b40a13dfc02ee1d7237beee6dec
 
 Shoes.app :width => 400, :height => 400 do
   background orange
