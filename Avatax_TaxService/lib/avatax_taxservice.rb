@@ -149,7 +149,7 @@ module AvaTax
     def gettax(document)
       
       #Extract data from document hash
-      xtract 
+      xtract(document) 
 
       # If validate set to true then user has requested address validation before the tax call
       if @validate
@@ -174,7 +174,7 @@ module AvaTax
 
       # Subsitute template place holders with real values
       @soap = @template_gettax.result(binding)
-      if debug
+      if @debug
         @log.puts "#{Time.now}: SOAP request created:"
       @log.puts @soap
       end
@@ -185,7 +185,7 @@ module AvaTax
       # Make the call to the Avalara service
       begin
       # Call using debug
-        if debug
+        if @debug
           # Use Ruby built in Benchmark function to record response times
           @log.puts "#{Time.now}: Calling GetTax Service for DocCode: #{@doccode}"
           time = Benchmark.measure do
@@ -209,7 +209,7 @@ module AvaTax
       @gettax_xpath = File.readlines(@def_locn + '/xpath_gettax.txt')
 
       # Call using debug
-      if debug
+      if @debug
         # Use Ruby built in Benchmark function to record response times
         @log.puts "#{Time.now}: Parsing the GeTax response:"
         time = Benchmark.measure do
@@ -244,7 +244,7 @@ module AvaTax
     def adjusttax(document)
       
       #Extract data from document hash
-      xtract 
+      xtract(document) 
 
       # If vaidate set to true then user has requested address validation before the tax call
       if @validate
@@ -269,7 +269,7 @@ module AvaTax
 
       # Subsitute template place holders with real values
       @soap = @template_adjust.result(binding)
-      if debug
+      if @debug
         @log.puts "#{Time.now}: SOAP request created:"
       @log.puts @soap
       end
@@ -280,7 +280,7 @@ module AvaTax
       # Make the call to the Avalara service
       begin
       # Call using debug
-        if debug
+        if @debug
           # Use Ruby built in Benchmark function to record response times
           @log.puts "#{Time.now}: Calling AdjustTax Service for DocCode: #{@doccode}"
           time = Benchmark.measure do
@@ -304,7 +304,7 @@ module AvaTax
       @adjtax_xpath = File.readlines(@def_locn + '/xpath_adjtax.txt')
 
       # Call using debug
-      if debug
+      if @debug
         # Use Ruby built in Benchmark function to record response times
         @log.puts "#{Time.now}: Parsing the AdjustTax response:"
         time = Benchmark.measure do
@@ -339,7 +339,7 @@ module AvaTax
     def posttax(document)
       
       #Extract data from document hash
-      xtract
+      xtract(document)
 
       # Subsitute template place holders with real values
       @soap = @template_post.result(binding)
@@ -354,7 +354,7 @@ module AvaTax
       # Make the call to the Avalara service
       begin
       # Call using debug
-        if debug
+        if @debug
           # Use Ruby built in Benchmark function to record response times
           @log.puts "#{Time.now}: Calling PostTax Service for DocCode: #{@doccode}"
           time = Benchmark.measure do
@@ -378,7 +378,7 @@ module AvaTax
       @posttax_xpath = File.readlines(@def_locn + '/xpath_post.txt')
 
       # Call using debug
-      if debug
+      if @debug
         # Use Ruby built in Benchmark function to record response times
         @log.puts "#{Time.now}: Parsing the PostTax response:"
         time = Benchmark.measure do
@@ -413,11 +413,11 @@ module AvaTax
     def committax(document)
         
       #Extract data from document hash
-      xtract
+      xtract(document)
 
       # Subsitute template place holders with real values
       @soap = @template_commit.result(binding)
-      if debug
+      if @debug
         @log.puts "#{Time.now}: SOAP request created:"
       @log.puts @soap
       end
@@ -428,7 +428,7 @@ module AvaTax
       # Make the call to the Avalara service
       begin
       # Call using debug
-        if debug
+        if @debug
           # Use Ruby built in Benchmark function to record response times
           @log.puts "#{Time.now}: Calling CommitTax Service for DocCode: #{@doccode}"
           time = Benchmark.measure do
@@ -452,7 +452,7 @@ module AvaTax
       @committax_xpath = File.readlines(@def_locn + '/xpath_commit.txt')
 
       # Call using debug
-      if debug
+      if @debug
         # Use Ruby built in Benchmark function to record response times
         @log.puts "#{Time.now}: Parsing the commitTax response:"
         time = Benchmark.measure do
@@ -487,11 +487,11 @@ module AvaTax
     def canceltax(document)
       
       #Extract data from document hash
-      xtract
+      xtract(document)
 
       # Subsitute template place holders with real values
       @soap = @template_cancel.result(binding)
-      if debug
+      if @debug
         @log.puts "#{Time.now}: SOAP request created:"
       @log.puts @soap
       end
@@ -502,7 +502,7 @@ module AvaTax
       # Make the call to the Avalara service
       begin
       # Call using debug
-        if debug
+        if @debug
           # Use Ruby built in Benchmark function to record response times
           @log.puts "#{Time.now}: Calling CancelTax Service for DocCode: #{@doccode}"
           time = Benchmark.measure do
@@ -526,7 +526,7 @@ module AvaTax
       @canceltax_xpath = File.readlines(@def_locn + '/xpath_cancel.txt')
 
       # Call using debug
-      if debug
+      if @debug
         # Use Ruby built in Benchmark function to record response times
         @log.puts "#{Time.now}: Parsing the CancelTax response:"
         time = Benchmark.measure do
@@ -561,11 +561,11 @@ module AvaTax
     def gettaxhistory(document)
       
       #Extract data from document hash
-      xtract      
+      xtract(document)      
 
       # Subsitute template place holders with real values
       @soap = @template_gettaxhistory.result(binding)
-      if debug
+      if @debug
         @log.puts "#{Time.now}: SOAP request created:"
       @log.puts @soap
       end
@@ -576,7 +576,7 @@ module AvaTax
       # Make the call to the Avalara service
       begin
       # Call using debug
-        if debug
+        if @debug
           # Use Ruby built in Benchmark function to record response times
           @log.puts "#{Time.now}: Calling GetTaxHistory Service"
           time = Benchmark.measure do
@@ -600,7 +600,7 @@ module AvaTax
       @gettaxhistory_xpath = File.readlines(@def_locn + '/xpath_gettaxhistory.txt')
 
       # Call using debug
-      if debug
+      if @debug
         # Use Ruby built in Benchmark function to record response times
         @log.puts "#{Time.now}: Parsing the GetTaxHistory response:"
         time = Benchmark.measure do
@@ -635,11 +635,11 @@ module AvaTax
     def reconciletaxhistory(document)
       
       #Extract data from document hash
-      xtract      
+      xtract(document)      
 
       # Subsitute template place holders with real values
       @soap = @template_reconciletaxhistory.result(binding)
-      if debug
+      if @debug
         @log.puts "#{Time.now}: SOAP request created:"
       @log.puts @soap
       end
@@ -650,7 +650,7 @@ module AvaTax
       # Make the call to the Avalara service
       begin
       # Call using debug
-        if debug
+        if @debug
           # Use Ruby built in Benchmark function to record response times
           @log.puts "#{Time.now}: Calling ReconcileTaxHistory Service"
           time = Benchmark.measure do
@@ -674,7 +674,7 @@ module AvaTax
       @reconciletaxhistory_xpath = File.readlines(@def_locn + '/xpath_reconciletaxhistory.txt')
 
       # Call using debug
-      if debug
+      if @debug
         # Use Ruby built in Benchmark function to record response times
         @log.puts "#{Time.now}: Parsing the ReconcileTaxHistory response:"
         time = Benchmark.measure do
@@ -767,7 +767,7 @@ module AvaTax
     ############################################################################################################
     # xtract - Extract data from document hash
     ############################################################################################################
-    def xtract
+    def xtract(document)
 
       companycode = document[:companycode]
       doctype = document[:doctype]
@@ -808,9 +808,11 @@ module AvaTax
       newdoccode = document[:newdoccode]
       lastdocid = document[:lastdocid] 
       reconciled = document[:reconciled]
-      startdate = document[:startdate]                 
+      startdate = document[:startdate]
+      enddate = document[:enddate]                 
       docstatus = document[:docstatus]      
       lastdoccode = document[:lastdoccode]
+      cancelcode = document[:cancelcode]
       pagesize = document[:pagesize]
       debug = document[:debug]
       validate = document[:validate]

@@ -1,12 +1,13 @@
 Gem::Specification.new do |s|
   s.name = "Avatax_TaxService"
-  s.version = "1.0.6"
+  s.version = "1.0.7"
   s.date = "2012-10-28"
   s.author = "Graham S Wilson"
   s.email = "support@Avalara.com"
   s.summary = "Ruby SDK for Avatax Web Services"
   s.homepage = "http://www.avalara.com/"
   s.description = "Ruby SDK provides means of communication with Avatax Web Services."
+  s.license = 'MIT'
   s.files = ["lib/tax_log.txt", "lib/taxservice_dev.wsdl", "lib/taxservice_prd.wsdl", "lib/avatax_taxservice.rb",
              "lib/template_adjusttax.erb", "lib/template_canceltax.erb", "lib/template_committax.erb","lib/template_gettax.erb",
              "lib/template_gettaxhistory.erb","lib/template_isauthorized.erb","lib/template_ping.erb","lib/template_posttax.erb",

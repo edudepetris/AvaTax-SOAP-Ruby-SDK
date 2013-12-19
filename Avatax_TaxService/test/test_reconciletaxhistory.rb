@@ -28,7 +28,9 @@ document[:lastdoccode] = ''
 document[:pagesize] = '1'
 document[:debug] = true
 
-tax_result = [] 
+#Create empty hash for the tax result details 
+tax_result = Hash.new
+
 #Call the gettax service
 tax_result = TaxServ.reconciletaxhistory(document)
 

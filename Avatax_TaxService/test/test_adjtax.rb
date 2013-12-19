@@ -102,6 +102,7 @@ document[:validate]= false                     #If true - addresses will be vali
 
 #Create empty hash for the tax result details 
 tax_result = Hash.new
+
 #Call the tax service
 tax_result = TaxServ.gettax(document) 
 

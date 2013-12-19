@@ -12,8 +12,8 @@ document = Hash.new
 #Create new address hash object
 address = Hash.new
 
-credentials[:username] = 'USERNAME'
-credentials[:password] = 'PASSWORD'
+credentials[:username] = 'grahamw'
+credentials[:password] = 'Avalara1!'
 credentials[:name] = 'Avalara Inc.'
 credentials[:clientname] = 'MyShoppingCart'
 credentials[:adapter] = 'Avatax SDK for Ruby 1.0.6'
@@ -26,7 +26,7 @@ TaxServ = AvaTax::TaxService.new(credentials)
 AddrService = AvaTax::AddressService.new(credentials)
 
 #Populate the fields required by the GetTax call
-document[:companycode] = 'APITrialCompany'
+document[:companycode] = '1'
 document[:doctype] = 'SalesInvoice'
 document[:doccode] = "MyDocCode"    
 document[:docdate] = "2013-10-11" 
@@ -98,12 +98,13 @@ document[:exchangerate] = ".0000"              #Indicates the currency exchange 
 document[:exchangerateeffdate] = "1900-01-01"  #Indicates the effective date of the exchange rate.
 document[:poslanecode] = ""                    #Optional POS Lane Code
 document[:businessidentificationno] = ""       #Optional Business Identification Number
-document[:debug] = false                       #Run in debug move - writes data to tax_log.txt
+document[:debug] = true                       #Run in debug move - writes data to tax_log.txt
 document[:validate]= false                     #If true - addresses will be validated before the tax call 
 
 
 #Create empty hash for the tax result details 
 tax_result = Hash.new
+
 #Call the tax service
 tax_result = TaxServ.gettax(document) 
 
@@ -113,7 +114,7 @@ pp tax_result
 puts
 
 #Always check the result code
- if tax_result[:ResultCode] == "Success"
+ if tax_result[:ResultCode] == ["Success"]
    puts "The GetTax call was successful"
  else
    puts "The GetTax call failed"
