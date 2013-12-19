@@ -1,39 +1,36 @@
 #Load the Avalara Address Service module
 require 'avatax_taxservice' 
 
-#Create an tax service instance
-username = 'USERNAME'     #Your user account number or name here
-password = 'PASSWORD'   #The password that was e-mailed to you here
-name = 'Avalara Inc.'
-clientname = 'MyShoppingCart'
-adapter = 'Avatax SDK for Ruby 1.0.1'
-machine = 'Lenovo W520 Windows 7'
-TaxServ = AvaTax::TaxService.new(username,password,name,clientname,adapter,machine)
+#Create new credentials hash object
+credentials = Hash.new
 
-companycode = 'APITrialCompany'
-lastdocid = "99999999"
-reconciled = false
-startdate = '2013-01-01'
-enddate = "2013-10-15"
-docstatus = "Any"
-doctype = "SalesInvoice"
-lastdoccode =""
-pagesize ="1"
-debug = true
+#Create new document hash object
+document = Hash.new
+
+credentials[:username] = 'USERNAME'
+credentials[:password] = 'PASSWORD'
+credentials[:name] = 'Avalara Inc.'
+credentials[:clientname] = 'MyShoppingCart'
+credentials[:adapter] = 'Avatax SDK for Ruby 1.0.6'
+credentials[:machine] = 'Lenovo W520 Windows 7'
+
+#Create a tax service instance
+TaxServ = AvaTax::TaxService.new(credentials)
+
+document[:companycode] = 'APITrialCompany'
+document[:lastdocid] = '99999999'
+document[:reconciled] = false
+document[:startdate] = '2013-01-01'
+document[:enddate] = '2013-10-15'
+document[:docstatus] = "Any"
+document[:doctype] = 'SalesInvoice'
+document[:lastdoccode] = ''
+document[:pagesize] = '1'
+document[:debug] = true
 
 tax_result = [] 
 #Call the gettax service
-tax_result = TaxServ.reconciletaxhistory(companycode,
-                  lastdocid,
-                  reconciled,
-                  startdate,
-                  enddate,
-                  docstatus,
-                  doctype,
-                  lastdoccode,
-                  pagesize,
-                  debug)
-
+tax_result = TaxServ.reconciletaxhistory(document)
 
 require 'pp'
 pp tax_result

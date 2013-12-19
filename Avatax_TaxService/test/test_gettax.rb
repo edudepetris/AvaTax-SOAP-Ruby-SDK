@@ -3,31 +3,42 @@ require 'avatax_taxservice'
 #Load the Avalara Address Service module - optional
 require 'avatax_addressservice' 
 
-#Create an tax service instance
-username = 'USERNAME'   #Your user account number or name here
-password = 'PASSWORD'   #The password that was e-mailed to you here
-name = 'Avalara Inc.'
-clientname = 'MyShoppingCart'
-adapter = 'Avatax SDK for Ruby 1.0.1'
-machine = 'Lenovo W520 Windows 7'
-TaxServ = AvaTax::TaxService.new(username,password,name,clientname,adapter,machine) 
+#Create new credentials hash object
+credentials = Hash.new
 
-#Create an address service instance - optional
-AddrService = AvaTax::AddressService.new(username,password,name,clientname,adapter,machine)
+#Create new document hash object
+document = Hash.new
+
+#Create new address hash object
+address = Hash.new
+
+credentials[:username] = 'USERNAME'
+credentials[:password] = 'PASSWORD'
+credentials[:name] = 'Avalara Inc.'
+credentials[:clientname] = 'MyShoppingCart'
+credentials[:adapter] = 'Avatax SDK for Ruby 1.0.6'
+credentials[:machine] = 'Lenovo W520 Windows 7'
+
+#Create a tax service instance
+TaxServ = AvaTax::TaxService.new(credentials) 
+
+#Create an address service instance
+AddrService = AvaTax::AddressService.new(credentials)
 
 #Populate the fields required by the GetTax call
-companycode = 'API TrialCompany'    #Same as the company code you set in the Admin console
-doctype = "SalesInvoice"            #The type of document you want to process
-doccode = "MyDocCode"               #Your doc code (e.g. invoice number)
-docdate = "2013-10-11"              #The date on the document
-salespersoncode = "Bill Sales"      #Optional sales person 
-customercode = "CUS001"             #Customer code
-customerusagetype = ""              #Usage type
-discount = ".0000"                  #Discount amount
-purchaseorderno = "PO123456"        #PO number
-exemptionno = ""                    #Exemption number
-origincode = "123"                  #Origin or ship from code - you make it up 
-destinationcode = "456"             #Destination or ship to code - you make it up 
+document[:companycode] = 'APITrialCompany'
+document[:doctype] = 'SalesInvoice'
+document[:doccode] = "MyDocCode"    
+document[:docdate] = "2013-10-11" 
+document[:salespersoncode] = "Bill Sales" 
+document[:customercode] = "CUS001"
+document[:customerusagetype] = ""    
+document[:discount] = ".0000"             
+document[:purchaseorderno]= "PO123456"
+document[:exemptionno] = ""
+document[:origincode] = "123"     
+document[:destinationcode] = "456"
+
 #Pass addresses as an array
 #  <AddressCode>123</AddressCode>
 #  <Line1>100 Ravine Lane</Line1>
@@ -40,10 +51,11 @@ destinationcode = "456"             #Destination or ship to code - you make it u
 #  <TaxRegionId>0</TaxRegionId>
 #  <Latitude/>
 #  <Longitude/>
-addresses = [
+document[:addresses]= [
   ["123", "100 ravine lane", "", "","Bainbridge Island","WA","98110","US","0","",""],
   ["456", "7070 West Arlington Drive", "", "","Lakewood","CO","80123","US","0","",""]
   ]
+
 #Pass order/invoice lines as an array
 # <No>1</No>
 # <OriginCode></OriginCode>
@@ -64,66 +76,36 @@ addresses = [
 # <TaxDate>1900-01-01</TaxDate>
 # <Reason>Tax Credit</Reason>
 # <TaxIncluded>false</TaxIncluded>
-# <BusinessIdentificationNo></BusinessIdentificationNo>
-lines = [
+# <BusinessIdentificationNo></BusinessIdentificationNo>  
+document[:lines] = [
   ["1","","","Canoe","","1","300.43","false","","ref1","ref2","","","Blue canoe","TaxAmount","10","1900-01-01","Tax credit","false",""],
   ["2","","","Rowing boat","","1","800.12","false","","ref3","ref4","","","Red rowing boat","None",".0000","1900-01-01","","false",""]
 ]
-detaillevel = "Tax"                 #The level of detail you want returned by the service
-referencecode = ""                  #Reference code - used for returns
-hashcode = "0"                      #Set to 0
-locationcode = ""                   #Store Location, Outlet Id, or Outlet code.
-commit = "false"                    #Invoice will be committed if this flag has been set to true.
-batchcode = ""                      #Optional Batch Code
-taxoverridetype = "None"            #Type of TaxOverride
-taxamount = ".0000"                 #The TaxAmount overrides the total tax for the document, if not 0
-taxdate = "1900-01-01"              #Tax Date is the date used to calculate tax
-reason = ""                         #Reason for applying TaxOverride.
-currencycode = "USD"                #3 character ISO 4217 currency code (for example, USD) 
-servicemode = "Remote"              #All lines are calculated by AvaTax remote server
-paymentdate = "2013-09-26"          #Indicates the date payment was applied to this invoice
-exchangerate = ".0000"              #Indicates the currency exchange rate
-exchangerateeffdate = "1900-01-01"  #Indicates the effective date of the exchange rate.
-poslanecode = ""                    #Optional POS Lane Code
-businessidentificationno = ""       #Optional Business Identification Number
-debug = false                       #Run in debug move - writes data to tax_log.txt
-validate = false                    #Performs address validation before calculating tax - needs address service installed
+document[:detaillevel] = "Tax"                 #The level of detail you want returned by the service     
+document[:referencecode] = ""                  #Reference code - used for returns
+document[:hashcode] = "0"                      #Set to 0
+document[:locationcode] = ""                   #Store Location, Outlet Id, or Outlet code.
+document[:commit] = "false"                    #Invoice will be committed if this flag has been set to true.
+document[:batchcode] = ""                      #Optional Batch Code
+document[:taxoverridetype] = "None"            #Type of TaxOverride  
+document[:taxamount]= ".0000"                  #The TaxAmount overrides the total tax for the document, if not 0
+document[:taxdate] = "1900-01-01"              #Tax Date is the date used to calculate tax
+document[:reason] = ""                         #Reason for applying TaxOverride. = ""
+document[:currencycode] = "USD"                #3 character ISO 4217 currency code (for example, USD) 
+document[:servicemode] = "Remote"              #All lines are calculated by AvaTax remote server
+document[:paymentdate] = "2013-09-26"          #Indicates the date payment was applied to this invoice
+document[:exchangerate] = ".0000"              #Indicates the currency exchange rate
+document[:exchangerateeffdate] = "1900-01-01"  #Indicates the effective date of the exchange rate.
+document[:poslanecode] = ""                    #Optional POS Lane Code
+document[:businessidentificationno] = ""       #Optional Business Identification Number
+document[:debug] = false                       #Run in debug move - writes data to tax_log.txt
+document[:validate]= false                     #If true - addresses will be validated before the tax call 
+
 
 #Create empty hash for the tax result details 
-tax_result = {}
-tax_result = TaxServ.gettax(companycode,
-                  doctype,
-                  doccode,
-                  docdate,
-                  salespersoncode,
-                  customercode,
-                  customerusagetype,
-                  discount,
-                  purchaseorderno,
-                  exemptionno,
-                  origincode,
-                  destinationcode,
-                  addresses,
-                  lines,
-                  detaillevel,
-                  referencecode,
-                  hashcode,
-                  locationcode,
-                  commit,
-                  batchcode,
-                  taxoverridetype,
-                  taxamount,
-                  taxdate,
-                  reason,
-                  currencycode,
-                  servicemode,
-                  paymentdate,
-                  exchangerate,
-                  exchangerateeffdate,
-                  poslanecode,
-                  businessidentificationno,
-                  debug,
-                  validate) 
+tax_result = Hash.new
+#Call the tax service
+tax_result = TaxServ.gettax(document) 
 
 #Print out the returned hash
 require 'pp'
@@ -131,7 +113,7 @@ pp tax_result
 puts
 
 #Always check the result code
- if tax_result[:ResultCode] = "Success" then
+ if tax_result[:ResultCode] == "Success"
    puts "The GetTax call was successful"
  else
    puts "The GetTax call failed"

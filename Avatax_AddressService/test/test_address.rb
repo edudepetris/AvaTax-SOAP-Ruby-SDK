@@ -3,6 +3,12 @@ require 'avatax_addressservice'
 #require green_shoes for the GUI
 require 'green_shoes'
 
+#Create new Credentials hash object
+credentials = Hash.new
+
+#Create new Address hash object
+address = Hash.new
+
 Shoes.app :width => 400, :height => 400 do
   background orange
   border("#BE8",
@@ -11,19 +17,21 @@ Shoes.app :width => 400, :height => 400 do
     para
     para "Enter Avalara credentials"
     para "Username:"
-    @username = edit_line
+    @username = edit_line text: "USERNAME"
     para "Password:"
-    @password = edit_line :secret => true 
+    @password = edit_line text: "PASSWORD", :secret => true 
     para
     @confirm = button "Confirm"
     para
     @confirm.click { 
-      name = 'Avalara Inc.'
-      clientname = 'MyShoppingCart'
-      adapter = 'Avatax SDK for Ruby 1.0.1'
-      machine = 'Lenovo W520 Windows 7'
+      credentials[:username] = @username.text
+      credentials[:password] = @password.text
+      credentials[:name] = 'Avalara Inc.'
+      credentials[:clientname] = 'MyShoppingCart'
+      credentials[:adapter] = 'Avatax SDK for Ruby 1.0.5'
+      credentials[:machine] = 'Lenovo W520 Windows 7'
       #Create an address service instance
-      AddrService = AvaTax::AddressService.new(@username.text,@password.text,name,clientname,adapter,machine)
+      AddrService = AvaTax::AddressService.new(credentials)
     
       #Open a window to get the address to validate
       Shoes.app :width => 400, :height => 700, :title => "Avalara - Address Validation Tester" do
@@ -59,10 +67,19 @@ Shoes.app :width => 400, :height => 400 do
         
         #When the user clicks the Validate button then call the Validate service
         @validate.click {
+          address[:line1] = @line1.text
+          address[:line2] = @line2.text
+          address[:line3] = @line3.text
+          address[:city] = @city.text
+          address[:region] =  @state.text
+          address[:postalcode] = @zip.text
+          address[:country]= @country.text
+          address[:textcase] = @textcase
+          address[:addresscode] = "123"
+          
+        #Call the validate service - passing the address as a Hash
 
-
-        #Call the validate service
-       val_addr = AddrService.validate(nil, @line1.text, nil, nil, @city.text, @state.text, @zip.text, 'US', nil, nil, nil, @textcase, nil, nil)
+        val_addr = AddrService.validate(address)
 
      
         if val_addr[:ResultCode] == "Success"
