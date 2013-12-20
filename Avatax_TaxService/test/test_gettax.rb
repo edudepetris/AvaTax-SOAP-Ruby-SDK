@@ -12,8 +12,8 @@ document = Hash.new
 #Create new address hash object
 address = Hash.new
 
-credentials[:username] = 'grahamw'
-credentials[:password] = 'Avalara1!'
+credentials[:username] = 'USERNAME'
+credentials[:password] = 'PASSWORD'
 credentials[:name] = 'Avalara Inc.'
 credentials[:clientname] = 'MyShoppingCart'
 credentials[:adapter] = 'Avatax SDK for Ruby 1.0.6'
@@ -26,7 +26,7 @@ TaxServ = AvaTax::TaxService.new(credentials)
 AddrService = AvaTax::AddressService.new(credentials)
 
 #Populate the fields required by the GetTax call
-document[:companycode] = '1'
+document[:companycode] = 'APITrialCompany'
 document[:doctype] = 'SalesInvoice'
 document[:doccode] = "MyDocCode"    
 document[:docdate] = "2013-10-11" 
