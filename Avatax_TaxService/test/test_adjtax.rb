@@ -52,9 +52,9 @@ document[:destinationcode] = "456"
 #  <TaxRegionId>0</TaxRegionId>
 #  <Latitude/>
 #  <Longitude/>
-document[:addresses] = [
-  ["123", "100 ravine lane", "", "","Bainbridge Island","WA","98110","US","0","",""],
-  ["456", "1S278 Wenmoth", "", "","Batavia","IL","60510","US","0","",""]
+document[:addresses]= [
+  {:addresscode => "123",:line1 => "100 ravine lane",:city => "Bainbridge Island",:region => "WA",:postalcode => "98110",:country => "US",:taxregionid => "0",:latitude => "",:longitude => ""},
+  {:addresscode => "456",:line1 => "7070 West Arlington Drive",:city => "Lakewood",:region => "CO",:postalcode => "80123",:country => "US",:taxregionid => "0"}
   ]
 #Pass order/invoice lines as an array
 # <No>1</No>
@@ -77,8 +77,9 @@ document[:addresses] = [
 # <Reason>Tax Credit</Reason>
 # <TaxIncluded>false</TaxIncluded>
 # <BusinessIdentificationNo></BusinessIdentificationNo> 
-document[:lines] = [["1","","","Canoe","","1","300","false","","ref1","ref2","","","Blue canoe","None",".0000","1900-01-01","","false",""],
-["2","","","Rowing boat","","1","800","false","","ref3","ref4","","","Red rowing boat","None",".0000","1900-01-01","","false",""]
+document[:lines] = [
+  {:no => "1",:itemcode => "Canoe",:qty => "1",:amount => "300.43",:discounted => "false",:ref1 => "ref1",:ref2 => "ref2",:description => "Blue canoe",:taxoverridetypeline => "TaxAmount",:taxamountline => "10",:taxdateline => "1900-01-01",:reasonline => "Tax credit",:taxincluded => "false"},
+  {:no => "2",:itemcode => "Rowing boat",:qty => "1",:amount => "800.12",:discounted => "false",:ref1 => "ref3",:ref2 => "ref4",:description => "Red rowing boat",:taxoverridetypeline => "None",:taxamountline => "0",:taxdateline => "1900-01-01",:taxincluded => "false"}
 ]
 document[:detaillevel] = "Tax"                 #The level of detail you want returned by the service     
 document[:referencecode] = ""                  #Reference code - used for returns
