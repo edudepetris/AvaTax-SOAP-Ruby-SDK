@@ -158,7 +158,7 @@ module AvaTax
           time = Benchmark.measure do
             valaddr
           end
-          if @val_addr[:ResultCode] == "Success"
+          if @val_addr[:ResultCode] == ["Success"]
             @log.puts "#{Time.now}: Validation OK"
           else
             @log.puts "#{Time.now}: Address #{line1}, #{line2}, #{line3}, #{city}, #{region}, #{postalcode}, #{country} failed to validate."
@@ -253,7 +253,7 @@ module AvaTax
           time = Benchmark.measure do
             valaddr
           end
-          if @val_addr[:ResultCode] == "Success"
+          if @val_addr[:ResultCode] == ["Success"]
             @log.puts "#{Time.now}: Validation OK"
           else
             @log.puts "#{Time.now}: Address #{line1}, #{line2}, #{line3}, #{city}, #{region}, #{postalcode}, #{country} failed to validate."
