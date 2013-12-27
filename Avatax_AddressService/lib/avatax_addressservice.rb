@@ -30,7 +30,7 @@ module AvaTax
       @def_locn = gem_root + "/lib"
 
       #Open Avatax Error Log
-      @log = File.new(@def_locn + '\address_log.txt', "w")
+      @log = File.new(@def_locn + '/address_log.txt', "w")
       @log.puts "#{Time.now}: Address service started"
 
       #log :false turns off HTTP logging
@@ -38,21 +38,21 @@ module AvaTax
 
       begin
       #Read in the SOAP template for Ping
-        @template_ping = ERB.new(File.read(@def_locn + '\template_ping.erb'))
+        @template_ping = ERB.new(File.read(@def_locn + '/template_ping.erb'))
       rescue
         @log.puts "#{Time.now}: Error loading the Ping template"
       end
 
       begin
       #Read in the SOAP template for Validate
-        @template_validate = ERB.new(File.read(@def_locn + '\template_validate.erb'))
+        @template_validate = ERB.new(File.read(@def_locn + '/template_validate.erb'))
       rescue
         @log.puts "#{Time.now}: Error loading the Validate template"
       end
 
       begin
       #Read in the SOAP template for IsAuthorized
-        @template_isauthorized = ERB.new(File.read(@def_locn + '\template_isauthorized.erb'))
+        @template_isauthorized = ERB.new(File.read(@def_locn + '/template_isauthorized.erb'))
       rescue
         @log.puts "#{Time.now}: Error loading the IsAuthorized template"
       end
@@ -83,7 +83,7 @@ module AvaTax
       @doc = Nokogiri::XML(@response).remove_namespaces!
 
       #Read in an array of XPATH pointers
-      @ping_xpath = File.readlines(@def_locn + '\xpath_ping.txt')
+      @ping_xpath = File.readlines(@def_locn + '/xpath_ping.txt')
 
       #Read each array element, extract the result returned by the service and place in a the @return_data hash
       @ping_xpath.each{|xpath| @return_data[xpath[2...xpath.length].chomp.to_sym] = @doc.xpath(xpath).text}
@@ -146,7 +146,7 @@ module AvaTax
       @doc = Nokogiri::XML(@response).remove_namespaces!
 
       #Read in an array of XPATH pointers
-      @validate_xpath = File.readlines(@def_locn + '\xpath_validate.txt')
+      @validate_xpath = File.readlines(@def_locn + '/xpath_validate.txt')
 
       #Read each array element, extract the result returned by the service and place in a the @return_data hash
       @validate_xpath.each{|xpath| @return_data[xpath[2...xpath.length].chomp.to_sym] = @doc.xpath(xpath).text}
@@ -178,7 +178,7 @@ module AvaTax
       @doc = Nokogiri::XML(@response).remove_namespaces!
 
       #Read in an array of XPATH pointers
-      @isauthorized_xpath = File.readlines(@def_locn + '\xpath_isauthorized.txt')
+      @isauthorized_xpath = File.readlines(@def_locn + '/xpath_isauthorized.txt')
 
       #Read each array element, extract the result returned by the service and place in a the @return_data hash
       @isauthorized_xpath.each{|xpath| @return_data[xpath[2...xpath.length].chomp.to_sym] = @doc.xpath(xpath).text}
