@@ -1,11 +1,12 @@
 Gem::Specification.new do |s|
   s.name = "Avatax_AddressService"
-  s.version = "1.0.5"
+  s.version = "1.0.6"
   s.date = "2012-12-16"
   s.author = "Graham S Wilson"
   s.email = "support@Avalara.com"
   s.summary = "Ruby SDK for Avatax Address Web Services"
   s.homepage = "http://www.avalara.com/"
+  s.license = 'MIT'
   s.description = "Ruby SDK provides means of communication with Avatax Web Services."
   s.files = ["lib/address_log.txt", "lib/addressservice_dev.wsdl", "lib/addressservice_prd.wsdl", "lib/avatax_addressservice.rb",
              "lib/template_validate.erb","lib/template_ping.erb","lib/template_isauthorized.erb",
