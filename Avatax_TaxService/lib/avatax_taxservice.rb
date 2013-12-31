@@ -343,7 +343,7 @@ module AvaTax
 
       # Subsitute template place holders with real values
       @soap = @template_post.result(binding)
-      if debug
+      if @debug
         @log.puts "#{Time.now}: SOAP request created:"
       @log.puts @soap
       end
