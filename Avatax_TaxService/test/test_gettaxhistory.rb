@@ -13,16 +13,18 @@ credentials[:name] = 'Avalara Inc.'
 credentials[:clientname] = 'MyShoppingCart'
 credentials[:adapter] = 'Avatax SDK for Ruby 1.0.6'
 credentials[:machine] = 'Lenovo W520 Windows 7'
+# Determine whether the DEV or PROD service is used. false = DEV  true = PROD
+credentials[:use_production_account] = false
 
 #Create a tax service instance
 TaxServ = AvaTax::TaxService.new(credentials) 
 
-document[:docid] = "99999999" 
+document[:docid] = "" 
 document[:companycode] = 'APITrialCompany'
 document[:doctype] = 'SalesInvoice'
-document[:doccode] = ""    
+document[:doccode] = "MyDocCode100"    
 document[:detaillevel] = "Line"
-document[:debug] = false
+document[:debug] = true
 
 #Create empty hash for the tax result details 
 tax_result = Hash.new
@@ -32,6 +34,7 @@ tax_result = TaxServ.gettaxhistory(document)
 
 require 'pp'
 pp tax_result
+
 
 
 

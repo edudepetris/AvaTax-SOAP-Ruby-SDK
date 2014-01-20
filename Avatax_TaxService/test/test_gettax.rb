@@ -15,9 +15,11 @@ address = Hash.new
 credentials[:username] = 'USERNAME'
 credentials[:password] = 'PASSWORD'
 credentials[:name] = 'Avalara Inc.'
-credentials[:clientname] = 'MyShoppingCart'
-credentials[:adapter] = 'Avatax SDK for Ruby 1.0.6'
+credentials[:clientname] = ''
+credentials[:adapter] = ''
 credentials[:machine] = 'Lenovo W520 Windows 7'
+# Determine whether the DEV or PROD service is used. false = DEV  true = PROD
+credentials[:use_production_account] = false
 
 #Create a tax service instance
 TaxServ = AvaTax::TaxService.new(credentials) 
@@ -27,8 +29,8 @@ AddrService = AvaTax::AddressService.new(credentials)
 
 #Populate the fields required by the GetTax call
 document[:companycode] = 'APITrialCompany'
-document[:doctype] = 'SalesInvoice'
-document[:doccode] = "MyDocCode"    
+document[:doctype] = 'SalesOrder'
+document[:doccode] = "MyDocCode100"    
 document[:docdate] = "2013-10-11" 
 document[:salespersoncode] = "Bill Sales" 
 document[:customercode] = "CUS001"
@@ -53,7 +55,7 @@ document[:destinationcode] = "456"
 #  <Longitude/>
 document[:addresses]= [
   {:addresscode => "123",:line1 => "100 ravine lane", :line2 => "Suite 21",:city => "Bainbridge Island",:region => "WA",:postalcode => "98110",:country => "US",:taxregionid => "0",:latitude => "",:longitude => ""},
-  {:addresscode => "456",:line1 => "7070 West Arlington Drive",:city => "Lakewood",:region => "CO",:postalcode => "80123",:country => "US",:taxregionid => "0"}
+  {:addresscode => "456",:line1 => "9436 NE Blue Wave Ct",:city => "Bainbridge Island",:region => "WA",:postalcode => "98110",:country => "US",:taxregionid => "0"}
   ]
 
 #Pass order/invoice lines as an array of hashes
@@ -98,7 +100,7 @@ document[:exchangerate] = ".0000"              #Indicates the currency exchange 
 document[:exchangerateeffdate] = "1900-01-01"  #Indicates the effective date of the exchange rate.
 document[:poslanecode] = ""                    #Optional POS Lane Code
 document[:businessidentificationno] = ""       #Optional Business Identification Number
-document[:debug] = true                       #Run in debug move - writes data to tax_log.txt
+document[:debug] = false                       #Run in debug move - writes data to tax_log.txt
 document[:validate]= false                     #If true - addresses will be validated before the tax call 
 
 
@@ -113,45 +115,32 @@ require 'pp'
 pp tax_result
 puts
 
-#Always check the result code
- if tax_result[:ResultCode] == ["Success"]
-   puts "The GetTax call was successful"
- else
-   puts "The GetTax call failed"
- end
+puts "Result Code = #{tax_result[:get_tax_response][:get_tax_result][:result_code]}"
+puts "Total Taxable = #{tax_result[:get_tax_response][:get_tax_result][:total_taxable]}"
+puts "Total Tax = #{tax_result[:get_tax_response][:get_tax_result][:total_tax]}"
+puts
+#Get total taxable
+puts tax_result[:get_tax_response][:get_tax_result][:total_taxable]
+puts
+
+#Get first tax line
+pp tax_result[:get_tax_response][:get_tax_result][:tax_lines][:tax_line][0]
 
 puts
-#Convert a hash value to Floating point
-tt = tax_result[:GetTaxResultTotalTax].at(0).to_f
-puts "Total tax = #{tt}"
+#Get tax details for line 2
+pp tax_result[:get_tax_response][:get_tax_result][:tax_lines][:tax_line][1][:tax_details]
 
-#Use the size method to determine the no of entries associated with a symbol
-puts tax_result[:TaxDetailTaxName].size
+puts
+#Get tax line 2 .. first level of tax detail
+pp tax_result[:get_tax_response][:get_tax_result][:tax_lines][:tax_line][1][:tax_details][:tax_detail][0]
 
-#Data elements begin at 0
-puts tax_result[:TaxDetailTaxName][0]
-puts tax_result[:TaxDetailTaxName][1]
+puts
+#Get tax line 2 - country
+pp tax_result[:get_tax_response][:get_tax_result][:tax_lines][:tax_line][1][:tax_details][:tax_detail][0][:country]
 
-tax_result[:TaxDetailJurisType].each do |type|
-  puts type
-end
 
-#Example of extracting the tax breakdown per line
-no_of_lines = tax_result[:TaxLineNo].size
-no_of_jurisdictions = tax_result[:TaxDetailCountry].size / no_of_lines
-i = 0
-while i < no_of_lines
-  puts
-  puts "Line = #{tax_result[:TaxLineNo][i]}"
-  j = 0
-  while j < no_of_jurisdictions
-    puts "Jurisdiction #{j+1} = #{tax_result[:TaxDetailJurisName][j]}"
-    puts "Tax name = #{tax_result[:TaxDetailTaxName][j]}"
-    puts "Taxable amount = #{tax_result[:TaxDetailBase][j]}"
-    puts "Tax rate = #{tax_result[:TaxDetailRate][j]}"
-    puts "Tax calculated = #{tax_result[:TaxDetailTaxCalculated][j]}"
-    puts
-    j += 1
-  end      
-  i += 1
-end
+
+
+
+
+

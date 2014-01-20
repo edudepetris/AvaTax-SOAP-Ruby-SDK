@@ -13,6 +13,8 @@ credentials[:name] = 'Avalara Inc.'
 credentials[:clientname] = 'MyShoppingCart'
 credentials[:adapter] = 'Avatax SDK for Ruby 1.0.6'
 credentials[:machine] = 'Lenovo W520 Windows 7'
+# Determine whether the DEV or PROD service is used. false = DEV  true = PROD
+credentials[:use_production_account] = false
 
 #Create a tax service instance
 TaxServ = AvaTax::TaxService.new(credentials)
@@ -37,21 +39,6 @@ tax_result = TaxServ.reconciletaxhistory(document)
 require 'pp'
 pp tax_result
 
-#Calculate the number od docs returned
-no_recs = tax_result.size - 2
-puts no_recs
-
-#Print out the document details
-i = 0
-while i <= no_recs
-  puts tax_result[:GetTaxResultDocId][i]
-  puts tax_result[:GetTaxResultDocType][i]
-  puts tax_result[:GetTaxResultDocDate][i]
-  puts tax_result[:GetTaxResultTotalAmount][i]
-  puts tax_result[:GetTaxResultTotalTax][i]
-  puts
-  i += 1      
-end
 
 
 

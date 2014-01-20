@@ -1,5 +1,6 @@
 #Load the Avalara Address Service module
 require 'avatax_taxservice' 
+require 'pp'
 
 #Create new credentials hash object
 credentials = Hash.new
@@ -19,21 +20,24 @@ credentials[:use_production_account] = false
 #Create a tax service instance
 TaxServ = AvaTax::TaxService.new(credentials) 
 
-#Populate the fields required by the GetTax call
-document[:companycode] = 'APITrialCompany'
-document[:doctype] = 'SalesInvoice'
-document[:doccode] = "MyDocCode"    
-document[:cancelcode] = "DocVoided" 
-document[:debug] = false                    #Run in debug move - writes data to tax_log.txt
+#Populate the fields required by the PostTax call
+document[:message] = 'APITrialCompany'
+document[:debug] = true                    #Run in debug move - writes data to tax_log.txt
 
 #Create empty hash for the tax result details 
 tax_result = Hash.new
 
 #Call the tax service
-tax_result = TaxServ.canceltax(document) 
+tax_result = TaxServ.ping(document) 
 
-require 'pp'
 pp tax_result
+
+puts "Result code = #{tax_result[:result_code]}"
+puts "Summary = #{tax_result[:summary]}"
+puts "Details = #{tax_result[:details]}"
+puts "Faultstring = #{tax_result[:fault][:faultstring]}"
+
+
 
 
 

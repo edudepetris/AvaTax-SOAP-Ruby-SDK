@@ -18,6 +18,8 @@ credentials[:name] = 'Avalara Inc.'
 credentials[:clientname] = 'MyShoppingCart'
 credentials[:adapter] = 'Avatax SDK for Ruby 1.0.6'
 credentials[:machine] = 'Lenovo W520 Windows 7'
+# Determine whether the DEV or PROD service is used. false = DEV  true = PROD
+credentials[:use_production_account] = false
 
 #Create a tax service instance
 TaxServ = AvaTax::TaxService.new(credentials) 
@@ -105,7 +107,7 @@ document[:validate]= false                     #If true - addresses will be vali
 tax_result = Hash.new
 
 #Call the tax service
-tax_result = TaxServ.gettax(document) 
+tax_result = TaxServ.adjusttax(document) 
 
 require 'pp'
 pp tax_result
