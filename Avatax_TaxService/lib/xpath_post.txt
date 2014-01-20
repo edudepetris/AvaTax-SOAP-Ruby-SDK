@@ -1,9 +1,0 @@
-//TransactionId
-//ResultCode
-//Summary
-//Details
-//Helplink
-//RefersTo
-//Severity
-//Source
-//DocId

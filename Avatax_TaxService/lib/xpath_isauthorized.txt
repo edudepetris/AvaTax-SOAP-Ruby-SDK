@@ -1,4 +1,0 @@
-//TransactionId
-//ResultCode
-//Operations
-//Expires
