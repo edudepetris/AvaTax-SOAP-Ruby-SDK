@@ -1,12 +1,18 @@
 require 'savon'
 require 'erb'
-require 'nokogiri'
 require 'benchmark'
 
 module AvaTax
   #Avalara tax class
   class TaxService
     def initialize(credentials)
+      
+      #Retrieve gemspec details
+      spec = Gem::Specification.find_by_name("Avatax_TaxService")
+      #Set @def_locn to the Avatax-x.x.x gem install library. This enables the ruby programs to
+      #find other objects that it needs.      
+      gem_root = spec.gem_dir
+      @def_locn = gem_root + "/lib"    
 
       #Extract data from hash
       username = credentials[:username]
@@ -15,31 +21,34 @@ module AvaTax
       clientname = credentials[:clientname]
       adapter = credentials[:adapter]
       machine = credentials[:machine]
+      use_production_account = credentials[:use_production_account]
 
       #Set credentials and Profile information
       @username = username == nil ? "" : username
       @password = password == nil ? "" : password
       @name = name == nil ? "" : name
-      @clientname = clientname == nil ? "" : clientname
-      @adapter = adapter == nil ? "" : adapter
+      @clientname = (clientname == nil or clientname == "") ? "Avatax SDK for Ruby Default Client Name" : clientname
+      @adapter = (adapter == nil or adapter == "") ? spec.summary + spec.version.to_s : adapter
       @machine = machine == nil ? "" : machine
+      @use_production_account = (use_production_account != true) ? false : use_production_account
 
-      #Set @def_locn to the Avatax-x.x.x gem install library. This enables the ruby programs to
-      #find other objects that it needs.
-      spec = Gem::Specification.find_by_name("Avatax_TaxService")
-      gem_root = spec.gem_dir
-      @def_locn = gem_root + "/lib"
 
       #Header for response data
       @responsetime_hdr = "  (User)    (System)    (Total)    (Real)"
 
       #Open Avatax Error Log
       @log = File.new(@def_locn + '/tax_log.txt', "w")
-      @log.puts "#{Time.now}: Tax service started"
 
       #Get service details from WSDL - control_array[2] contains the WSDL read from the address_control file
-      #log :false turns off HTTP logging
-      @client = Savon.client(wsdl: @def_locn + '/taxservice_dev.wsdl', log: false)
+      #log :false turns off HTTP logging. Select either Dev or Prod depending on the value of the boolean value 'use_production_account'
+      if @use_production_account
+        @log.puts "#{Time.now}: Avalara Production Tax service started"
+        @client = Savon.client(wsdl: @def_locn + '/taxservice_prd.wsdl', log: false)
+      else
+        @log.puts "#{Time.now}: Avalara Development Tax service started"
+        @client = Savon.client(wsdl: @def_locn + '/taxservice_dev.wsdl', log: false)        
+      end
+
 
       #Read in the SOAP template for Get tax
       begin
@@ -105,48 +114,59 @@ module AvaTax
       end
 
       # Create hash for validate result
-      @return_data = Hash.new
+      @response = Hash.new
     end
 
     ####################################################################################################
     # ping - Verifies connectivity to the web service and returns version information about the service.
     ####################################################################################################
-    def ping(message = nil)
-      #Read in the SOAP template
-      @message = message == nil ? "?" : message
+    def ping(document)
+  
+    @service = 'Ping'
+  
+      #Extract data from document hash
+      xtract(document)
 
       # Subsitute real vales for template place holders
       @soap = @template_ping.result(binding)
-
-      #Clear return hash
-      @return_data.clear
-
+      if @debug
+        @log.puts "#{Time.now}: SOAP request created:"
+        @log.puts @soap
+      end
+        
       # Make the call to the Avalara service
       begin
-        @response = @client.call(:ping, xml: @soap).to_s
-      rescue
-        @log.puts "#{Time.now}: Error calling Ping service ... check that your account name and password are correct."
-      end
-      # Load the response into a Nokogiri object and remove namespaces
-      @doc = Nokogiri::XML(@response).remove_namespaces!
-
-      #Read in an array of XPATH pointers
-      @ping_xpath = File.readlines(@def_locn + '/xpath_ping.txt')
-
-      #Parse the returned repsonse and return to caller as a hash
-      @ping_xpath.each do |xpath|
-        if xpath.rstrip.length != 0
-          @return_data[xpath.gsub('/', '').chomp.to_sym] = @doc.search(xpath).map{ |n| n.text}
+      # Call using debug
+        if @debug
+          # Use Ruby built in Benchmark function to record response times
+          @log.puts "#{Time.now}: Calling #{@service} Service"
+          time = Benchmark.measure do
+            # Call Ping Service
+            @response = @client.call(:ping, xml: @soap).to_hash
+          end
+          @log.puts "Response times for Ping:"
+          @log.puts @responsetime_hdr
+          @log.puts time
+        else
+        # Call Ping Service
+          @response = @client.call(:ping, xml: @soap).to_hash
         end
+    
+      return @response
+    
+      #Capture unexpected errors
+      rescue Savon::Error => error
+        abend(error)
       end
-
-      return @return_data
+    
     end
 
     ####################################################################################################
     # gettax - Calls the Avatax GetTax Service
     ####################################################################################################
     def gettax(document)
+      
+      @service = 'GetTax'
       
       #Extract data from document hash
       xtract(document) 
@@ -174,13 +194,11 @@ module AvaTax
 
       # Subsitute template place holders with real values
       @soap = @template_gettax.result(binding)
+      # If in debug mode write SOAP request to log
       if @debug
         @log.puts "#{Time.now}: SOAP request created:"
-      @log.puts @soap
+        @log.puts @soap
       end
-
-      #Clear return hash
-      @return_data.clear
 
       # Make the call to the Avalara service
       begin
@@ -189,59 +207,32 @@ module AvaTax
           # Use Ruby built in Benchmark function to record response times
           @log.puts "#{Time.now}: Calling GetTax Service for DocCode: #{@doccode}"
           time = Benchmark.measure do
-          # Call GetTax Service
-            @response = @client.call(:get_tax, xml: @soap).to_s
+            # Call GetTax Service
+            @response = @client.call(:get_tax, xml: @soap).to_hash
           end
           @log.puts "Response times for GetTax:"
-        @log.puts @responsetime_hdr
-        @log.puts time
+          @log.puts @responsetime_hdr
+          @log.puts time
         else
         # Call GetTax Service
-          @response = @client.call(:get_tax, xml: @soap).to_s
+          @response = @client.call(:get_tax, xml: @soap).to_hash
         end
-        #Capture unexpected errors
-      rescue
-        @log.puts "#{Time.now}: Error calling GetTax service ... check that your account name and password are correct."
-      end
 
-      #Parse the response
-      #Read in an array of XPATH pointers
-      @gettax_xpath = File.readlines(@def_locn + '/xpath_gettax.txt')
-
-      # Call using debug
-      if @debug
-        # Use Ruby built in Benchmark function to record response times
-        @log.puts "#{Time.now}: Parsing the GeTax response:"
-        time = Benchmark.measure do
-        # Load the response into a Nokogiri object and remove namespaces
-          @doc = Nokogiri::XML(@response).remove_namespaces!
-          #Parse the returned repsonse and return to caller as a hash
-          @gettax_xpath.each do |xpath|
-            if xpath.rstrip.length != 0
-              @return_data[xpath.gsub('/', '').chomp.to_sym] = @doc.search(xpath).map{ |n| n.text}
-            end
-          end
-        end
-      @log.puts @responsetime_hdr
-      @log.puts time
-      else
-      # Load the response into a Nokogiri object and remove namespaces
-        @doc = Nokogiri::XML(@response).remove_namespaces!
-        #Parse the returned repsonse and return to caller as a hash
-        @gettax_xpath.each do |xpath|
-          if xpath.rstrip.length != 0
-            @return_data[xpath.gsub('/', '').chomp.to_sym] = @doc.search(xpath).map{ |n| n.text}
-          end
-        end
-      end
       #Return data to calling program
-      return @return_data
+      return @response
+      
+      #Capture unexpected errors
+      rescue Savon::Error => error
+        abend(error)
+      end
     end
 
     ####################################################################################################
     # adjusttax - Calls the Avatax AdjustTax Service
     ####################################################################################################
     def adjusttax(document)
+      
+      @service = 'AdjustTax'
       
       #Extract data from document hash
       xtract(document) 
@@ -259,8 +250,8 @@ module AvaTax
             @log.puts "#{Time.now}: Address #{line1}, #{line2}, #{line3}, #{city}, #{region}, #{postalcode}, #{country} failed to validate."
           end
           @log.puts "Response times for Address Validation:"
-        @log.puts @responsetime_hdr
-        @log.puts time
+          @log.puts @responsetime_hdr
+          @log.puts time
         else
         #Validate with no benchmarking
           valaddr
@@ -271,11 +262,8 @@ module AvaTax
       @soap = @template_adjust.result(binding)
       if @debug
         @log.puts "#{Time.now}: SOAP request created:"
-      @log.puts @soap
+        @log.puts @soap
       end
-
-      #Clear return hash
-      @return_data.clear
 
       # Make the call to the Avalara service
       begin
@@ -285,58 +273,32 @@ module AvaTax
           @log.puts "#{Time.now}: Calling AdjustTax Service for DocCode: #{@doccode}"
           time = Benchmark.measure do
           # Call AdjustTax Service
-            @response = @client.call(:adjust_tax, xml: @soap).to_s
+            @response = @client.call(:adjust_tax, xml: @soap).to_hash
           end
           @log.puts "Response times for AdjustTax:"
-        @log.puts @responsetime_hdr
-        @log.puts time
+          @log.puts @responsetime_hdr
+          @log.puts time
         else
-        # Call AdjustTax Service
-          @response = @client.call(:adjust_tax, xml: @soap).to_s
+          # Call AdjustTax Service
+          @response = @client.call(:adjust_tax, xml: @soap).to_hash
         end
-        #Capture unexpected errors
-      rescue
-        @log.puts "#{Time.now}: Error calling AdjustTax service ... check that your account name and password are correct."
-      end
 
-      #Parse the response
-      #Read in an array of XPATH pointers
-      @adjtax_xpath = File.readlines(@def_locn + '/xpath_adjtax.txt')
-
-      # Call using debug
-      if @debug
-        # Use Ruby built in Benchmark function to record response times
-        @log.puts "#{Time.now}: Parsing the AdjustTax response:"
-        time = Benchmark.measure do
-        # Load the response into a Nokogiri object and remove namespaces
-          @doc = Nokogiri::XML(@response).remove_namespaces!
-          #Parse the returned repsonse and return to caller as a hash
-          @adjtax_xpath.each do |xpath|
-            if xpath.rstrip.length != 0
-              @return_data[xpath.gsub('/', '').chomp.to_sym] = @doc.search(xpath).map{ |n| n.text}
-            end
-          end
-        end
-      @log.puts @responsetime_hdr
-      @log.puts time
-      else
-      # Load the response into a Nokogiri object and remove namespaces
-        @doc = Nokogiri::XML(@response).remove_namespaces!
-        #Parse the returned repsonse and return to caller as a hash
-        @adjtax_xpath.each do |xpath|
-          if xpath.rstrip.length != 0
-            @return_data[xpath.gsub('/', '').chomp.to_sym] = @doc.search(xpath).map{ |n| n.text}
-          end
-        end
+            #Return data to calling program
+      return @response
+      
+      #Capture unexpected errors
+      rescue Savon::Error => error
+        abend(error)
       end
-      #Return data to calling program
-      return @return_data
+      
     end
 
     ####################################################################################################
     # posttax - Calls the Avatax PostTax Service
     ####################################################################################################
     def posttax(document)
+      
+      @service = 'PostTax'
       
       #Extract data from document hash
       xtract(document)
@@ -345,11 +307,8 @@ module AvaTax
       @soap = @template_post.result(binding)
       if @debug
         @log.puts "#{Time.now}: SOAP request created:"
-      @log.puts @soap
+        @log.puts @soap
       end
-
-      #Clear return hash
-      @return_data.clear
 
       # Make the call to the Avalara service
       begin
@@ -359,58 +318,32 @@ module AvaTax
           @log.puts "#{Time.now}: Calling PostTax Service for DocCode: #{@doccode}"
           time = Benchmark.measure do
           # Call PostTax Service
-            @response = @client.call(:post_tax, xml: @soap).to_s
+            @response = @client.call(:post_tax, xml: @soap).to_hash
           end
           @log.puts "Response times for PostTax:"
-        @log.puts @responsetime_hdr
-        @log.puts time
+          @log.puts @responsetime_hdr
+          @log.puts time
         else
-        # Call PostTax Service
-          @response = @client.call(:post_tax, xml: @soap).to_s
+          # Call PostTax Service
+          @response = @client.call(:post_tax, xml: @soap).to_hash
         end
-        #Capture unexpected errors
-      rescue
-        @log.puts "#{Time.now}: Error calling PostTax service ... check that your account name and password are correct."
-      end
 
-      #Parse the response
-      #Read in an array of XPATH pointers
-      @posttax_xpath = File.readlines(@def_locn + '/xpath_post.txt')
-
-      # Call using debug
-      if @debug
-        # Use Ruby built in Benchmark function to record response times
-        @log.puts "#{Time.now}: Parsing the PostTax response:"
-        time = Benchmark.measure do
-        # Load the response into a Nokogiri object and remove namespaces
-          @doc = Nokogiri::XML(@response).remove_namespaces!
-          #Parse the returned repsonse and return to caller as a hash
-          @posttax_xpath.each do |xpath|
-            if xpath.rstrip.length != 0
-              @return_data[xpath.gsub('/', '').chomp.to_sym] = @doc.search(xpath).map{ |n| n.text}
-            end
-          end
-        end
-      @log.puts @responsetime_hdr
-      @log.puts time
-      else
-      # Load the response into a Nokogiri object and remove namespaces
-        @doc = Nokogiri::XML(@response).remove_namespaces!
-        #Parse the returned repsonse and return to caller as a hash
-        @posttax_xpath.each do |xpath|
-          if xpath.rstrip.length != 0
-            @return_data[xpath.gsub('/', '').chomp.to_sym] = @doc.search(xpath).map{ |n| n.text}
-          end
-        end
-      end
       #Return data to calling program
-      return @return_data
+      return @response
+      
+      #Capture unexpected errors
+      rescue Savon::Error => error
+        abend(error)
+      end
+      
     end
 
     ####################################################################################################
     # committax - Calls the Avatax CommitTax Service
     ####################################################################################################
     def committax(document)
+      
+      @service = 'CommitTax'
         
       #Extract data from document hash
       xtract(document)
@@ -419,11 +352,8 @@ module AvaTax
       @soap = @template_commit.result(binding)
       if @debug
         @log.puts "#{Time.now}: SOAP request created:"
-      @log.puts @soap
+        @log.puts @soap
       end
-
-      #Clear return hash
-      @return_data.clear
 
       # Make the call to the Avalara service
       begin
@@ -433,58 +363,31 @@ module AvaTax
           @log.puts "#{Time.now}: Calling CommitTax Service for DocCode: #{@doccode}"
           time = Benchmark.measure do
           # Call CommitTax Service
-            @response = @client.call(:commit_tax, xml: @soap).to_s
+            @response = @client.call(:commit_tax, xml: @soap).to_hash
           end
           @log.puts "Response times for CommitTax:"
         @log.puts @responsetime_hdr
         @log.puts time
         else
         # Call CommitTax Service
-          @response = @client.call(:commit_tax, xml: @soap).to_s
+          @response = @client.call(:commit_tax, xml: @soap).to_hash
         end
-        #Capture unexpected errors
-      rescue
-        @log.puts "#{Time.now}: Error calling CommitTax service ... check that your account name and password are correct."
-      end
 
-      #Parse the response
-      #Read in an array of XPATH pointers
-      @committax_xpath = File.readlines(@def_locn + '/xpath_commit.txt')
-
-      # Call using debug
-      if @debug
-        # Use Ruby built in Benchmark function to record response times
-        @log.puts "#{Time.now}: Parsing the commitTax response:"
-        time = Benchmark.measure do
-        # Load the response into a Nokogiri object and remove namespaces
-          @doc = Nokogiri::XML(@response).remove_namespaces!
-          #Parse the returned repsonse and return to caller as a hash
-          @committax_xpath.each do |xpath|
-            if xpath.rstrip.length != 0
-              @return_data[xpath.gsub('/', '').chomp.to_sym] = @doc.search(xpath).map{ |n| n.text}
-            end
-          end
-        end
-      @log.puts @responsetime_hdr
-      @log.puts time
-      else
-      # Load the response into a Nokogiri object and remove namespaces
-        @doc = Nokogiri::XML(@response).remove_namespaces!
-        #Parse the returned repsonse and return to caller as a hash
-        @Committax_xpath.each do |xpath|
-          if xpath.rstrip.length != 0
-            @return_data[xpath.gsub('/', '').chomp.to_sym] = @doc.search(xpath).map{ |n| n.text}
-          end
-        end
-      end
       #Return data to calling program
-      return @return_data
+      return @response
+      
+      #Capture unexpected errors
+      rescue Savon::Error => error
+        abend(error)
+      end
     end
 
     ####################################################################################################
     # canceltax - Calls the Avatax CancelTax Service
     ####################################################################################################
     def canceltax(document)
+      
+      @service = 'CancelTax'     
       
       #Extract data from document hash
       xtract(document)
@@ -493,11 +396,8 @@ module AvaTax
       @soap = @template_cancel.result(binding)
       if @debug
         @log.puts "#{Time.now}: SOAP request created:"
-      @log.puts @soap
+        @log.puts @soap
       end
-
-      #Clear return hash
-      @return_data.clear
 
       # Make the call to the Avalara service
       begin
@@ -507,58 +407,31 @@ module AvaTax
           @log.puts "#{Time.now}: Calling CancelTax Service for DocCode: #{@doccode}"
           time = Benchmark.measure do
           # Call CancelTax Service
-            @response = @client.call(:cancel_tax, xml: @soap).to_s
+            @response = @client.call(:cancel_tax, xml: @soap).to_hash
           end
           @log.puts "Response times for CancelTax:"
-        @log.puts @responsetime_hdr
-        @log.puts time
+          @log.puts @responsetime_hdr
+          @log.puts time
         else
-        # Call CancelTax Service
-          @response = @client.call(:cancel_tax, xml: @soap).to_s
+          # Call CancelTax Service
+          @response = @client.call(:cancel_tax, xml: @soap).to_hash
         end
-        #Capture unexpected errors
-      rescue
-        @log.puts "#{Time.now}: Error calling CancelTax service ... check that your account name and password are correct."
-      end
 
-      #Parse the response
-      #Read in an array of XPATH pointers
-      @canceltax_xpath = File.readlines(@def_locn + '/xpath_cancel.txt')
-
-      # Call using debug
-      if @debug
-        # Use Ruby built in Benchmark function to record response times
-        @log.puts "#{Time.now}: Parsing the CancelTax response:"
-        time = Benchmark.measure do
-        # Load the response into a Nokogiri object and remove namespaces
-          @doc = Nokogiri::XML(@response).remove_namespaces!
-          #Parse the returned repsonse and return to caller as a hash
-          @canceltax_xpath.each do |xpath|
-            if xpath.rstrip.length != 0
-              @return_data[xpath.gsub('/', '').chomp.to_sym] = @doc.search(xpath).map{ |n| n.text}
-            end
-          end
-        end
-      @log.puts @responsetime_hdr
-      @log.puts time
-      else
-      # Load the response into a Nokogiri object and remove namespaces
-        @doc = Nokogiri::XML(@response).remove_namespaces!
-        #Parse the returned repsonse and return to caller as a hash
-        @canceltax_xpath.each do |xpath|
-          if xpath.rstrip.length != 0
-            @return_data[xpath.gsub('/', '').chomp.to_sym] = @doc.search(xpath).map{ |n| n.text}
-          end
-        end
-      end
       #Return data to calling program
-      return @return_data
+      return @response
+      
+      #Capture unexpected errors
+      rescue Savon::Error => error
+        abend(error)
+      end
     end
 
     ####################################################################################################
     # gettaxhistory - Calls the Avatax GetTaxHistory Service
     ####################################################################################################
     def gettaxhistory(document)
+      
+      @service = 'GetTaxHistory'
       
       #Extract data from document hash
       xtract(document)      
@@ -567,11 +440,8 @@ module AvaTax
       @soap = @template_gettaxhistory.result(binding)
       if @debug
         @log.puts "#{Time.now}: SOAP request created:"
-      @log.puts @soap
+        @log.puts @soap
       end
-
-      #Clear return hash
-      @return_data.clear
 
       # Make the call to the Avalara service
       begin
@@ -581,58 +451,32 @@ module AvaTax
           @log.puts "#{Time.now}: Calling GetTaxHistory Service"
           time = Benchmark.measure do
           # Call GetTaxHistory Service
-            @response = @client.call(:get_tax_history, xml: @soap).to_s
+            @response = @client.call(:get_tax_history, xml: @soap).to_hash
           end
           @log.puts "Response times for GetTaxHistory:"
-        @log.puts @responsetime_hdr
-        @log.puts time
+          @log.puts @responsetime_hdr
+          @log.puts time
         else
-        # Call GetTaxHistory Service
-          @response = @client.call(:get_tax_history, xml: @soap).to_s
+          # Call GetTaxHistory Service
+          @response = @client.call(:get_tax_history, xml: @soap).to_hash
         end
-        #Capture unexpected errors
-      rescue
-        @log.puts "#{Time.now}: Error calling GetTaxHistory service ... check that your account name and password are correct."
-      end
 
-      #Parse the response
-      #Read in an array of XPATH pointers
-      @gettaxhistory_xpath = File.readlines(@def_locn + '/xpath_gettaxhistory.txt')
-
-      # Call using debug
-      if @debug
-        # Use Ruby built in Benchmark function to record response times
-        @log.puts "#{Time.now}: Parsing the GetTaxHistory response:"
-        time = Benchmark.measure do
-        # Load the response into a Nokogiri object and remove namespaces
-          @doc = Nokogiri::XML(@response).remove_namespaces!
-          #Parse the returned repsonse and return to caller as a hash
-          @gettaxhistory_xpath.each do |xpath|
-            if xpath.rstrip.length != 0
-              @return_data[xpath.gsub('/', '').chomp.gsub('"', '').to_sym] = @doc.search(xpath).map{ |n| n.text}
-            end
-          end
-        end
-      @log.puts @responsetime_hdr
-      @log.puts time
-      else
-      # Load the response into a Nokogiri object and remove namespaces
-        @doc = Nokogiri::XML(@response).remove_namespaces!
-        #Parse the returned repsonse and return to caller as a hash
-        @gettaxhistory_xpath.each do |xpath|
-          if xpath.rstrip.length != 0
-            @return_data[xpath.gsub('/', '').chomp.gsub('"', '').to_sym] = @doc.search(xpath).map{ |n| n.text}
-          end
-        end
-      end
       #Return data to calling program
-      return @return_data
+      return @response
+      
+      #Capture unexpected errors
+      rescue Savon::Error => error
+        abend(error)
+      end
     end
 
     ####################################################################################################
     # reconciletaxhistory - Calls the Avatax ReconcileTaxHistory Service
     ####################################################################################################
     def reconciletaxhistory(document)
+      
+      
+      @service = 'ReconcileTaxHistory'      
       
       #Extract data from document hash
       xtract(document)      
@@ -641,11 +485,8 @@ module AvaTax
       @soap = @template_reconciletaxhistory.result(binding)
       if @debug
         @log.puts "#{Time.now}: SOAP request created:"
-      @log.puts @soap
+        @log.puts @soap
       end
-
-      #Clear return hash
-      @return_data.clear
 
       # Make the call to the Avalara service
       begin
@@ -655,84 +496,48 @@ module AvaTax
           @log.puts "#{Time.now}: Calling ReconcileTaxHistory Service"
           time = Benchmark.measure do
           # Call ReconcileTaxHistory Service
-            @response = @client.call(:reconcile_tax_history, xml: @soap).to_s
+            @response = @client.call(:reconcile_tax_history, xml: @soap).to_hash
           end
           @log.puts "Response times for ReconcileTaxHistory:"
         @log.puts @responsetime_hdr
         @log.puts time
         else
         # Call ReconcileTaxHistory Service
-          @response = @client.call(:reconcile_tax_history, xml: @soap).to_s
+          @response = @client.call(:reconcile_tax_history, xml: @soap).to_hash
         end
-        #Capture unexpected errors
-      rescue
-        @log.puts "#{Time.now}: Error calling ReconcileTaxHistory service ... check that your account name and password are correct."
-      end
 
-      #Parse the response
-      #Read in an array of XPATH pointers
-      @reconciletaxhistory_xpath = File.readlines(@def_locn + '/xpath_reconciletaxhistory.txt')
-
-      # Call using debug
-      if @debug
-        # Use Ruby built in Benchmark function to record response times
-        @log.puts "#{Time.now}: Parsing the ReconcileTaxHistory response:"
-        time = Benchmark.measure do
-        # Load the response into a Nokogiri object and remove namespaces
-          @doc = Nokogiri::XML(@response).remove_namespaces!
-          #Parse the returned repsonse and return to caller as a hash
-          @reconciletaxhistory_xpath.each do |xpath|
-            if xpath.rstrip.length != 0
-              @return_data[xpath.gsub('/', '').chomp.gsub('"', '').to_sym] = @doc.search(xpath).map{ |n| n.text}
-            end
-          end
-        end
-      @log.puts @responsetime_hdr
-      @log.puts time
-      else
-      # Load the response into a Nokogiri object and remove namespaces
-        @doc = Nokogiri::XML(@response).remove_namespaces!
-        #Parse the returned repsonse and return to caller as a hash
-        @reconciletaxhistory_xpath.each do |xpath|
-          if xpath.rstrip.length != 0
-            @return_data[xpath.gsub('/', '').chomp.gsub('"', '').to_sym] = @doc.search(xpath).map{ |n| n.text}
-          end
-        end
-      end
       #Return data to calling program
-      return @return_data
+      return @response
+      
+      #Capture unexpected errors
+      rescue Savon::Error => error
+        abend(error)
+      end
     end
 
     ############################################################################################################
     # isauthorized - Verifies connectivity to the web service and returns expiry information about the service.
     ############################################################################################################
     def isauthorized(operation = nil)
+      
+      @service = 'IsAuthorized'      
+      
       #Read in the SOAP template
       @operation = operation == nil ? "?" : operation
 
       # Subsitute real vales for template place holders
       @soap = @template_isauthorized.result(binding)
 
-      #Clear return hash
-      @return_data.clear
-
       # Make the call to the Avalara service
       begin
-        @response = @client.call(:is_authorized, xml: @soap).to_s
-      rescue
-        @log.puts "#{Time.now}: Error calling IsAuthorized service ... check username and password"
+        @response = @client.call(:is_authorized, xml: @soap).to_hash
+
+      return @response
+      
+      #Capture unexpected errors
+      rescue Savon::Error => error
+        abend(error)
       end
-
-      # Load the response into a Nokogiri object and remove namespaces
-      @doc = Nokogiri::XML(@response).remove_namespaces!
-
-      #Read in an array of XPATH pointers
-      @isauthorized_xpath = File.readlines(@def_locn + '/xpath_isauthorized.txt')
-
-      #Read each array element, extract the result returned by the service and place in a the @return_data hash
-      @isauthorized_xpath.each{|xpath| @return_data[xpath.gsub('/', '').chomp.to_sym] = @doc.xpath(xpath).text}
-
-      return @return_data
     end
 
     private
@@ -816,6 +621,7 @@ module AvaTax
       pagesize = document[:pagesize]
       debug = document[:debug]
       validate = document[:validate]
+      message = document[:message]
       
       #Set parms passed by user - If Nil then default else use passed value
       @companycode = companycode == nil ? "" : companycode
@@ -866,9 +672,22 @@ module AvaTax
       @lastdoccode = lastdoccode == nil ? "" : lastdoccode
       @pagesize = pagesize == nil ? "" : pagesize
       @debug = debug == nil ? false : debug
-      @message = ""
+      @ping_message = message
       
     end
-
+  
+    ############################################################################################################
+    # abend - Unexpected error handling
+    ############################################################################################################
+    def abend(error)
+      @log.puts "An unexpected error occurred: Response from server = #{error}"   
+      @log.puts "#{Time.now}: Error calling #{@service} service ... check that your account name and password are correct."
+      @response = error.to_hash
+      @response[:result_code] = 'Error'
+      @response[:summary] = @response[:fault][:faultcode]
+      @response[:details] = @response[:fault][:faultstring]   
+      return @response
+    end
+  
   end
 end  
