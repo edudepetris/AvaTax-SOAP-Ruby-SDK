@@ -17,8 +17,8 @@
       <soapenv:Body>
         <ser:AdjustTax>
          <ser:AdjustTaxRequest>
-            <ser:AdjustmentReason><%= adjustmentreason %></ser:AdjustmentReason>
-            <ser:AdjustmentDescription><%= adjustmentdescription %></ser:AdjustmentDescription>
+            <ser:AdjustmentReason><%= @adjustmentreason %></ser:AdjustmentReason>
+            <ser:AdjustmentDescription><%= @adjustmentdescription %></ser:AdjustmentDescription>
            <ser:GetTaxRequest>           
            <ser:CompanyCode><%= @companycode %></ser:CompanyCode>
            <ser:DocType><%= @doctype %></ser:DocType>
