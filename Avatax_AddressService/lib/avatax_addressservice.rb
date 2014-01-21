@@ -1,11 +1,16 @@
 require 'savon'
 require 'erb'
-require 'nokogiri'
 
 module AvaTax
   #Avalara address class
   class AddressService
     def initialize(credentials)
+      
+      #Set @def_locn to the Avatax-x.x.x gem install library. This enables the ruby programs to
+      #find other objects that it needs.
+      spec = Gem::Specification.find_by_name("Avatax_AddressService")
+      gem_root = spec.gem_dir
+      @def_locn = gem_root + "/lib"
       
       #Extract data from hash
       username = credentials[:username]
@@ -13,28 +18,32 @@ module AvaTax
       name = credentials[:name]
       clientname = credentials[:clientname]
       adapter = credentials[:adapter]      
-      machine = credentials[:machine]      
+      machine = credentials[:machine] 
+      use_production_account = credentials[:use_production_account]     
       
       #Set credentials and Profile information
       @username = username == nil ? "" : username
       @password = password == nil ? "" : password
       @name = name == nil ? "" : name
-      @clientname = clientname == nil ? "" : clientname
-      @adapter = adapter == nil ? "" : adapter
+      @clientname = (clientname == nil or clientname == "") ? "Avatax Address Service SDK for Ruby Default Client Name" : clientname
+      @adapter = (adapter == nil or adapter == "") ? spec.summary + spec.version.to_s : adapter
       @machine = machine == nil ? "" : machine
-
-      #Set @def_locn to the Avatax-x.x.x gem install library. This enables the ruby programs to
-      #find other objects that it needs.
-      spec = Gem::Specification.find_by_name("Avatax_AddressService")
-      gem_root = spec.gem_dir
-      @def_locn = gem_root + "/lib"
+      @use_production_account = (use_production_account != true) ? false : use_production_account
 
       #Open Avatax Error Log
       @log = File.new(@def_locn + '/address_log.txt', "w")
-      @log.puts "#{Time.now}: Address service started"
-
-      #log :false turns off HTTP logging
-      @client = Savon.client(wsdl: @def_locn + '/addressservice_dev.wsdl', log: false)
+      
+      #Get service details from WSDL - control_array[2] contains the WSDL read from the address_control file
+      #log :false turns off HTTP logging. Select either Dev or Prod depending on the value of the boolean value 'use_production_account'
+      if @use_production_account
+        @log.puts "#{Time.now}: Avalara Production Address service started"
+        #log :false turns off HTTP logging
+        @client = Savon.client(wsdl: @def_locn + '/addressservice_prd.wsdl', log: false)
+      else
+        @log.puts "#{Time.now}: Avalara Development Address service started"
+        #log :false turns off HTTP logging
+        @client = Savon.client(wsdl: @def_locn + '/addressservice_dev.wsdl', log: false)
+      end
 
       begin
       #Read in the SOAP template for Ping
@@ -56,14 +65,18 @@ module AvaTax
       rescue
         @log.puts "#{Time.now}: Error loading the IsAuthorized template"
       end
-      # Create hash for validate result
-      @return_data = Hash.new
+      
+      # Create hash for result
+      @response = Hash.new
     end
 
     ############################################################################################################
     # ping - Verifies connectivity to the web service and returns version information
     ############################################################################################################
     def ping(message = nil)
+      
+      @service = 'Ping'
+      
       #Read in the SOAP template
       @message = message == nil ? "?" : message
 
@@ -75,26 +88,22 @@ module AvaTax
 
       # Make the call to the Avalara Ping service
       begin
-        @response = @client.call(:ping, xml: @soap).to_s
-      rescue
-        @log.puts "#{Time.now}: Error calling Ping service ... check username and password"
+        @response = @client.call(:ping, xml: @soap).to_hash
+
+      return @response
+      
+      #Capture unexpected errors
+      rescue Savon::Error => error
+        abend(error)
       end
-      # Load the response into a Nokogiri object and remove namespaces
-      @doc = Nokogiri::XML(@response).remove_namespaces!
-
-      #Read in an array of XPATH pointers
-      @ping_xpath = File.readlines(@def_locn + '/xpath_ping.txt')
-
-      #Read each array element, extract the result returned by the service and place in a the @return_data hash
-      @ping_xpath.each{|xpath| @return_data[xpath[2...xpath.length].chomp.to_sym] = @doc.xpath(xpath).text}
-
-      return @return_data
     end
 
     ############################################################################################################
     # validate - call the adddress validation service
     ############################################################################################################
     def validate(address)
+
+      @service = 'Validate'
 
       #Extract data from hash
       addresscode = address[:addresscode]
@@ -131,59 +140,55 @@ module AvaTax
       # Subsitute real vales for template place holders
       @soap = @template_validate.result(binding)
 
-      #Clear return hash
-      @return_data.clear
-
       # Make the call to the Avalara Validate service
       begin
-        @response = @client.call(:validate, xml: @soap).to_s
+        @response = @client.call(:validate, xml: @soap).to_hash
 
-      rescue
-        @log.puts "#{Time.now}: Error calling Validate service ... check username and password"
+      return @response
+      
+      #Capture unexpected errors
+      rescue Savon::Error => error
+        abend(error)
       end
-
-      # Load the response into a Nokogiri object and remove namespaces
-      @doc = Nokogiri::XML(@response).remove_namespaces!
-
-      #Read in an array of XPATH pointers
-      @validate_xpath = File.readlines(@def_locn + '/xpath_validate.txt')
-
-      #Read each array element, extract the result returned by the service and place in a the @return_data hash
-      @validate_xpath.each{|xpath| @return_data[xpath[2...xpath.length].chomp.to_sym] = @doc.xpath(xpath).text}
-
-      return @return_data
     end
 
     ############################################################################################################
     #Verifies connectivity to the web service and returns version information about the service.
     ############################################################################################################
     def isauthorized(operation = nil)
+      
+      @service = 'IsAuthorized'
+      
       #Read in the SOAP template
       @operation = operation == nil ? "?" : operation
 
       # Subsitute real vales for template place holders
       @soap = @template_isauthorized.result(binding)
 
-      #Clear return hash
-      @return_data.clear
-
       # Make the call to the Avalara Ping service
       begin
-        @response = @client.call(:is_authorized, xml: @soap).to_s
-      rescue
-        @log.puts "#{Time.now}: Error calling IsAuthorized service ... check username and password"
+        @response = @client.call(:is_authorized, xml: @soap).to_hash
+
+      return @response
+      
+      #Capture unexpected errors
+      rescue Savon::Error => error
+        abend(error)
       end
-
-      # Load the response into a Nokogiri object and remove namespaces
-      @doc = Nokogiri::XML(@response).remove_namespaces!
-
-      #Read in an array of XPATH pointers
-      @isauthorized_xpath = File.readlines(@def_locn + '/xpath_isauthorized.txt')
-
-      #Read each array element, extract the result returned by the service and place in a the @return_data hash
-      @isauthorized_xpath.each{|xpath| @return_data[xpath[2...xpath.length].chomp.to_sym] = @doc.xpath(xpath).text}
-
-      return @return_data
+    end
+    
+    private
+    ############################################################################################################
+    # abend - Unexpected error handling
+    ############################################################################################################
+    def abend(error)
+      @log.puts "An unexpected error occurred: Response from server = #{error}"   
+      @log.puts "#{Time.now}: Error calling #{@service} service ... check that your account name and password are correct."
+      @response = error.to_hash
+      @response[:result_code] = 'Error'
+      @response[:summary] = @response[:fault][:faultcode]
+      @response[:details] = @response[:fault][:faultstring]   
+      return @response
     end
   end
 end
