@@ -13,7 +13,6 @@ Gem::Specification.new do |s|
              "lib/template_gettaxhistory.erb","lib/template_isauthorized.erb","lib/template_ping.erb","lib/template_posttax.erb",
              "lib/template_reconciletaxhistory.erb","test/test_adjtax.rb","test/test_gettax.rb","test/test_gettaxhistory.rb",
              "test/test_reconciletaxhistory.rb", "Avatax_TaxService.gemspec","Avatax Ruby SDK Guide.docx", "LICENSE.txt"]
-  s.add_dependency "nokogiri", ">= 1.4.0"
   s.add_dependency "savon", ">= 2.3.0"
   s.required_ruby_version = '>= 1.9.1'
   s.post_install_message = 'Thanks for installing the Avalara AddressService Ruby SDK. Refer to "Avatax Ruby SDK User Guide.docx" to get started.'
