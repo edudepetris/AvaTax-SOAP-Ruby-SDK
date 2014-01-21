@@ -14,8 +14,6 @@ address = Hash.new
 
 credentials[:username] = 'USERNAME'
 credentials[:password] = 'PASSWORD'
-credentials[:username] = '1100057680'
-credentials[:password] = '44A6A5AABF91B51D'
 credentials[:name] = 'Avalara Inc.'
 credentials[:clientname] = ''
 credentials[:adapter] = ''
@@ -31,7 +29,6 @@ AddrService = AvaTax::AddressService.new(credentials)
 
 #Populate the fields required by the GetTax call
 document[:companycode] = 'APITrialCompany'
-document[:companycode] = '1'
 document[:doctype] = 'SalesOrder'
 document[:doccode] = "MyDocCode100"    
 document[:docdate] = "2013-10-11" 
