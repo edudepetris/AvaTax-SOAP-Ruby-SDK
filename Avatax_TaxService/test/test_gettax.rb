@@ -14,6 +14,8 @@ address = Hash.new
 
 credentials[:username] = 'USERNAME'
 credentials[:password] = 'PASSWORD'
+credentials[:username] = '1100057680'
+credentials[:password] = '44A6A5AABF91B51D'
 credentials[:name] = 'Avalara Inc.'
 credentials[:clientname] = ''
 credentials[:adapter] = ''
@@ -29,6 +31,7 @@ AddrService = AvaTax::AddressService.new(credentials)
 
 #Populate the fields required by the GetTax call
 document[:companycode] = 'APITrialCompany'
+document[:companycode] = '1'
 document[:doctype] = 'SalesOrder'
 document[:doccode] = "MyDocCode100"    
 document[:docdate] = "2013-10-11" 
@@ -139,7 +142,11 @@ puts
 pp tax_result[:get_tax_response][:get_tax_result][:tax_lines][:tax_line][1][:tax_details][:tax_detail][0][:country]
 
 
-
+if tax_result[:get_tax_response][:get_tax_result][:result_code] == "Success" then
+     puts "The GetTax call was successful"
+else
+     puts "The GetTax call failed"
+end
 
 
 
