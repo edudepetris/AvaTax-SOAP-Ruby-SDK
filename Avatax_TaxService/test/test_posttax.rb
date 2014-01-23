@@ -9,7 +9,6 @@ document = Hash.new
 
 credentials[:username] = 'USERNAME'
 credentials[:password] = 'PASSWORD'
-
 credentials[:name] = 'Avalara Inc.'
 credentials[:clientname] = 'MyShoppingCart'
 credentials[:adapter] = 'Avatax SDK for Ruby 1.0.6'

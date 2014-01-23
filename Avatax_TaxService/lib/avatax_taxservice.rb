@@ -151,7 +151,10 @@ module AvaTax
         # Call Ping Service
           @response = @client.call(:ping, xml: @soap).to_hash
         end
-    
+      
+      #Strip off outer layer of the hash - not needed
+      @response = @response[:ping_response]
+          
       return @response
     
       #Capture unexpected errors
@@ -218,6 +221,9 @@ module AvaTax
           @response = @client.call(:get_tax, xml: @soap).to_hash
         end
 
+      #Strip off outer layer of the hash - not needed
+      @response = @response[:get_tax_response]
+
       #Return data to calling program
       return @response
       
@@ -283,7 +289,10 @@ module AvaTax
           @response = @client.call(:adjust_tax, xml: @soap).to_hash
         end
 
-            #Return data to calling program
+      #Strip off outer layer of the hash - not needed
+      @response = @response[:adjust_tax_response]
+
+      #Return data to calling program
       return @response
       
       #Capture unexpected errors
@@ -327,6 +336,9 @@ module AvaTax
           # Call PostTax Service
           @response = @client.call(:post_tax, xml: @soap).to_hash
         end
+
+      #Strip off outer layer of the hash - not needed
+      @response = @response[:post_tax_response]
 
       #Return data to calling program
       return @response
@@ -373,6 +385,9 @@ module AvaTax
           @response = @client.call(:commit_tax, xml: @soap).to_hash
         end
 
+      #Strip off outer layer of the hash - not needed
+      @response = @response[:commit_tax_response]
+
       #Return data to calling program
       return @response
       
@@ -417,6 +432,9 @@ module AvaTax
           @response = @client.call(:cancel_tax, xml: @soap).to_hash
         end
 
+      #Strip off outer layer of the hash - not needed
+      @response = @response[:cancel_tax_response]
+      
       #Return data to calling program
       return @response
       
@@ -460,7 +478,10 @@ module AvaTax
           # Call GetTaxHistory Service
           @response = @client.call(:get_tax_history, xml: @soap).to_hash
         end
-
+        
+      #Strip off outer layer of the hash - not needed
+      @response = @response[:get_tax_history_response]
+      
       #Return data to calling program
       return @response
       
@@ -506,6 +527,9 @@ module AvaTax
           @response = @client.call(:reconcile_tax_history, xml: @soap).to_hash
         end
 
+      #Strip off outer layer of the hash - not needed
+      @response = @response[:reconcile_tax_history_response]
+      
       #Return data to calling program
       return @response
       
@@ -522,15 +546,22 @@ module AvaTax
       
       @service = 'IsAuthorized'      
       
-      #Read in the SOAP template
-      @operation = operation == nil ? "?" : operation
+      #Extract data from document hash
+      xtract(document)
 
       # Subsitute real vales for template place holders
       @soap = @template_isauthorized.result(binding)
+      if @debug
+        @log.puts "#{Time.now}: SOAP request created:"
+        @log.puts @soap
+      end
 
       # Make the call to the Avalara service
       begin
         @response = @client.call(:is_authorized, xml: @soap).to_hash
+
+      #Strip off outer layer of the hash - not needed
+      @response = @response[:is_authorized_response]
 
       return @response
       
@@ -622,6 +653,7 @@ module AvaTax
       debug = document[:debug]
       validate = document[:validate]
       message = document[:message]
+      operation = document[:operation]
       
       #Set parms passed by user - If Nil then default else use passed value
       @companycode = companycode == nil ? "" : companycode
@@ -673,6 +705,7 @@ module AvaTax
       @pagesize = pagesize == nil ? "" : pagesize
       @debug = debug == nil ? false : debug
       @ping_message = message
+      @operation = operation
       
     end
   

@@ -115,31 +115,31 @@ require 'pp'
 pp tax_result
 puts
 
-puts "Result Code = #{tax_result[:get_tax_response][:get_tax_result][:result_code]}"
-puts "Total Taxable = #{tax_result[:get_tax_response][:get_tax_result][:total_taxable]}"
-puts "Total Tax = #{tax_result[:get_tax_response][:get_tax_result][:total_tax]}"
+puts "Result Code = #{tax_result[:get_tax_result][:result_code]}"
+puts "Total Taxable = #{tax_result[:get_tax_result][:total_taxable]}"
+puts "Total Tax = #{tax_result[:get_tax_result][:total_tax]}"
 puts
 #Get total taxable
-puts tax_result[:get_tax_response][:get_tax_result][:total_taxable]
+puts tax_result[:get_tax_result][:total_taxable]
 puts
 
 #Get first tax line
-pp tax_result[:get_tax_response][:get_tax_result][:tax_lines][:tax_line][0]
+pp tax_result[:get_tax_result][:tax_lines][:tax_line][0]
 
 puts
 #Get tax details for line 2
-pp tax_result[:get_tax_response][:get_tax_result][:tax_lines][:tax_line][1][:tax_details]
+pp tax_result[:get_tax_result][:tax_lines][:tax_line][1][:tax_details]
 
 puts
 #Get tax line 2 .. first level of tax detail
-pp tax_result[:get_tax_response][:get_tax_result][:tax_lines][:tax_line][1][:tax_details][:tax_detail][0]
+pp tax_result[:get_tax_result][:tax_lines][:tax_line][1][:tax_details][:tax_detail][0]
 
 puts
 #Get tax line 2 - country
-pp tax_result[:get_tax_response][:get_tax_result][:tax_lines][:tax_line][1][:tax_details][:tax_detail][0][:country]
+pp tax_result[:get_tax_result][:tax_lines][:tax_line][1][:tax_details][:tax_detail][0][:country]
 
 
-if tax_result[:get_tax_response][:get_tax_result][:result_code] == "Success" then
+if tax_result[:get_tax_result][:result_code] == "Success" then
      puts "The GetTax call was successful"
 else
      puts "The GetTax call failed"
