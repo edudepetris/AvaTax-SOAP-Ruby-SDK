@@ -73,7 +73,7 @@ module AvaTax
     ############################################################################################################
     # ping - Verifies connectivity to the web service and returns version information
     ############################################################################################################
-    def ping(message = nil)
+    def ping(message)
       
       @service = 'Ping'
       
@@ -83,12 +83,12 @@ module AvaTax
       # Subsitute real vales for template place holders
       @soap = @template_ping.result(binding)
 
-      #Clear return hash
-      @return_data.clear
-
       # Make the call to the Avalara Ping service
       begin
         @response = @client.call(:ping, xml: @soap).to_hash
+
+      #Strip off outer layer of the hash - not needed
+      @response = @response[:ping_response]
 
       return @response
       
@@ -144,6 +144,10 @@ module AvaTax
       begin
         @response = @client.call(:validate, xml: @soap).to_hash
 
+      #Strip off outer layer of the hash - not needed
+      @response = @response[:validate_response]
+      
+      #Return data to calling program
       return @response
       
       #Capture unexpected errors
@@ -155,7 +159,7 @@ module AvaTax
     ############################################################################################################
     #Verifies connectivity to the web service and returns version information about the service.
     ############################################################################################################
-    def isauthorized(operation = nil)
+    def isauthorized(operation)
       
       @service = 'IsAuthorized'
       
@@ -169,6 +173,9 @@ module AvaTax
       begin
         @response = @client.call(:is_authorized, xml: @soap).to_hash
 
+      #Strip off outer layer of the hash - not needed
+      @response = @response[:is_authorized_response]
+      
       return @response
       
       #Capture unexpected errors
