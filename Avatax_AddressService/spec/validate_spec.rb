@@ -16,10 +16,11 @@ describe "Validate" do
       :textcase => "Upper",
       :coordinates => "true",
       :taxability => "true"}
-    @creds = {:username => "account.admin.1100014690", 
-      :password => "avalara",  
-      :clientname => "AvaTaxCalcSOAP Ruby Sample",
-      :use_production_url => false}
+      credentials = YAML::load(File.open('credentials.yml'))
+      @creds = {:username => credentials['username'], 
+            :password => credentials['password'],  
+            :clientname => credentials['clientname'],
+            :use_production_url => credentials['production']}
     @svc = AvaTax::AddressService.new(@creds)      
   end
   
@@ -54,7 +55,7 @@ describe "Validate" do
     end    
   end
   
-  describe "has consistant formatting for" do
+  describe "has consistent formatting for" do
     it "internal logic errors" do
       lambda { @svc.validate(@address_req, @address_req) }.should raise_exception
     end

@@ -1,5 +1,5 @@
-require_relative 'Avatax_TaxService/lib/avatax_taxservice.rb'
-require_relative 'Avatax_AddressService/lib/avatax_addressservice.rb'
+require 'Avatax_TaxService'
+require 'Avatax_AddressService'
 require 'yaml'
 #Note that the ping function exists in both the AddressSvc and TaxSvc classes - it works the same way in both.
 

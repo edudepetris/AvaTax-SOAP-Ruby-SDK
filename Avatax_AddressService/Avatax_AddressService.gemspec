@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "Avatax_AddressService"
-  s.version = "1.0.8"
+  s.version = "1.0.9"
   s.date = "2012-12-16"
   s.author = "Graham S Wilson"
   s.email = "support@Avalara.com"

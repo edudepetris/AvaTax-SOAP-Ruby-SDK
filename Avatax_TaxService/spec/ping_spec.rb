@@ -2,10 +2,11 @@ require "spec_helper"
 
 describe "Ping" do
   before :each do
-    @creds = {:username => "account.admin.1100014690", 
-          :password => "avalara",  
-          :clientname => "AvaTaxCalcSOAP Ruby Sample",
-          :use_production_url => false}
+    credentials = YAML::load(File.open('credentials.yml'))
+    @creds = {:username => credentials['username'], 
+          :password => credentials['password'],  
+          :clientname => credentials['clientname'],
+          :use_production_url => credentials['production']}
   end
   
   describe "returns a meaningful" do
@@ -33,19 +34,13 @@ describe "Ping" do
       @creds[:clientname] = nil
       @service = AvaTax::TaxService.new(@creds)
       @service.ping[:result_code].should eql "Success"
-    end   
-    it "error when internet is unavailable" do
-      pending "not yet implemented"
-    end    
+    end      
   end
   
-  describe "has consistant formatting for" do
+  describe "has consistent formatting for" do
     it "internal logic errors" do
       @service = AvaTax::TaxService.new(@creds)
       lambda { @service.ping("param1","param2") }.should raise_exception
-    end
-    it "transmission errors" do
-      pending "should be similar to internet unavailable"
     end
     it "server-side errors" do
       @creds[:password] = nil

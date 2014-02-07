@@ -1,4 +1,4 @@
-require_relative 'Avatax_TaxService/lib/avatax_taxservice.rb'
+require 'Avatax_TaxService'
 require 'date'
 require 'yaml'
 

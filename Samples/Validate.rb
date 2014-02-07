@@ -1,4 +1,4 @@
-require_relative 'Avatax_AddressService/lib/avatax_addressservice.rb'
+require 'Avatax_AddressService'
 require 'yaml'
 
 #Create an instance of the service class

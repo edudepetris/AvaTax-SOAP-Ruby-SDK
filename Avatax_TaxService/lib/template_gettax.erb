@@ -57,7 +57,7 @@
              <ser:RevAcct><%= lin[:revacct] %></ser:RevAcct>
              <ser:Ref1><%= lin[:ref1] %></ser:Ref1>                  
              <ser:Ref2><%= lin[:ref2] %></ser:Ref2>
-             <ser:ExemptionNo><%= lin[:exemptionnoline] %></ser:ExemptionNo>
+             <ser:ExemptionNo><%= lin[:exemptionno] %></ser:ExemptionNo>
              <ser:CustomerUsageType><%= lin[:customerusagetype] %></ser:CustomerUsageType>
              <ser:Description><%= lin[:description] %></ser:Description>
              <ser:TaxOverride>
@@ -67,7 +67,7 @@
                <ser:Reason><%= lin[:reasonline] %></ser:Reason>
              </ser:TaxOverride>
              <ser:TaxIncluded><%= lin[:taxincluded] %></ser:TaxIncluded>
-             <ser:BusinessIdentificationNo><%= lin[:businessidentificationnoline] %></ser:BusinessIdentificationNo>
+             <ser:BusinessIdentificationNo><%= lin[:businessidentificationno] %></ser:BusinessIdentificationNo>
            </ser:Line><% end %>  
           </ser:Lines>
           <ser:DetailLevel><%= @detaillevel %></ser:DetailLevel>

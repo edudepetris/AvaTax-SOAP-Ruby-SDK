@@ -56,7 +56,7 @@ describe "AdjustTax" do
       
     }
     @request_optional = {
-      :companycode => credentials['companycode'],
+      :companycode => @get_tax_result[:company_code],
       :salespersoncode => "Bill Sales",
       :customerusagetype => "L",
       :discount => "10",
@@ -78,7 +78,6 @@ describe "AdjustTax" do
       :poslanecode => "1",
       :businessidentificationno => "2342",
       :debug => false,
-      :validate => false,
       :hashcode => "0",
       :taxoverridetype=>"None", 
       :taxamount=>".0000", 

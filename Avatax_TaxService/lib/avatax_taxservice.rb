@@ -17,6 +17,9 @@ module AvaTax
       #Extract data from hash
       username = credentials[:username]
       password = credentials[:password]
+      if username.nil? and password.nil?   
+        raise ArgumentError, "username and password are required"
+      end
       name = credentials[:name]
       clientname = credentials[:clientname]
       adapter = credentials[:adapter]
@@ -120,12 +123,12 @@ module AvaTax
     ####################################################################################################
     # ping - Verifies connectivity to the web service and returns version information about the service.
     ####################################################################################################
-    def ping(document)
+    def ping(message = nil)
   
     @service = 'Ping'
   
-      #Extract data from document hash
-      xtract(document)
+    #Read in the SOAP template
+    @message = message == nil ? "?" : message
 
       # Subsitute real vales for template place holders
       @soap = @template_ping.result(binding)
@@ -153,7 +156,7 @@ module AvaTax
         end
       
       #Strip off outer layer of the hash - not needed
-      @response = @response[:ping_response]
+      @response = @response[:ping_response][:ping_result]
           
       return @response
     
@@ -170,29 +173,40 @@ module AvaTax
     def gettax(document)
       
       @service = 'GetTax'
-      
-      #Extract data from document hash
-      xtract(document) 
 
-      # If validate set to true then user has requested address validation before the tax call
-      if @validate
-        if @debug
-          #Use Ruby built in Benchmark function to record response times
-          time = Benchmark.measure do
-            valaddr
-          end
-          if @val_addr[:ResultCode] == ["Success"]
-            @log.puts "#{Time.now}: Validation OK"
-          else
-            @log.puts "#{Time.now}: Address #{line1}, #{line2}, #{line3}, #{city}, #{region}, #{postalcode}, #{country} failed to validate."
-          end
-          @log.puts "Response times for Address Validation:"
-        @log.puts @responsetime_hdr
-        @log.puts time
-        else
-        #Validate with no benchmarking
-          valaddr
-        end
+      #create instance variables for each entry in input      
+      document.each do |k,v|
+        instance_variable_set("@#{k}",v)
+      end
+      #set required default values for missing required inputs
+      @doctype ||= "SalesOrder"
+      @discount ||= "0"
+      @detaillevel ||= "Tax"
+      @commit ||= false
+      @servicemode ||= "Remote"
+      @paymentdate ||= "1900-01-01"
+      @exchangerate ||= "0"
+      @exchangerateeffdate ||= "1900-01-01"
+      @taxoverridetype ||= "None"
+      @taxamount ||= "0"
+      @taxdate ||= "1900-01-01"
+      
+      #set required values for some fields
+      @hashcode = "0"
+      @batchcode = ""
+
+      
+      #@addresses
+      @addresses.each do |addr|
+        addr[:taxregionid] ||= "0"
+      end
+      #@lines
+      @lines.each do |line|
+        line[:taxoverridetypeline] ||= "None"
+        line[:taxamountline] ||= "0"
+        line[:taxdateline] ||= "1900-01-01"
+        line[:discounted] ||= false
+        line[:taxincluded] ||= false
       end
 
       # Subsitute template place holders with real values
@@ -222,7 +236,7 @@ module AvaTax
         end
 
       #Strip off outer layer of the hash - not needed
-      @response = @response[:get_tax_response]
+      @response = @response[:get_tax_response][:get_tax_result]
 
       #Return data to calling program
       return @response
@@ -239,30 +253,43 @@ module AvaTax
     def adjusttax(document)
       
       @service = 'AdjustTax'
-      
-      #Extract data from document hash
-      xtract(document) 
 
-      # If vaidate set to true then user has requested address validation before the tax call
-      if @validate
-        if @debug
-          #Use Ruby built in Benchmark function to record response times
-          time = Benchmark.measure do
-            valaddr
-          end
-          if @val_addr[:ResultCode] == ["Success"]
-            @log.puts "#{Time.now}: Validation OK"
-          else
-            @log.puts "#{Time.now}: Address #{line1}, #{line2}, #{line3}, #{city}, #{region}, #{postalcode}, #{country} failed to validate."
-          end
-          @log.puts "Response times for Address Validation:"
-          @log.puts @responsetime_hdr
-          @log.puts time
-        else
-        #Validate with no benchmarking
-          valaddr
-        end
+      #create instance variables for each entry in input      
+      document.each do |k,v|
+        instance_variable_set("@#{k}",v)
       end
+      #set required default values for missing required inputs
+      @doctype ||= "SalesOrder"
+      @discount ||= "0"
+      @detaillevel ||= "Tax"
+      @commit ||= false
+      @servicemode ||= "Remote"
+      @paymentdate ||= "1900-01-01"
+      @exchangerate ||= "0"
+      @exchangerateeffdate ||= "1900-01-01"
+      @taxoverridetype ||= "None"
+      @taxamount ||= "0"
+      @taxdate ||= "1900-01-01"
+      
+      #set required values for some fields
+      @hashcode = "0"
+      @batchcode = ""
+
+      
+      #@addresses
+      @addresses.each do |addr|
+        addr[:taxregionid] ||= "0"
+      end
+      #@lines
+      @lines.each do |line|
+        line[:taxoverridetypeline] ||= "None"
+        line[:taxamountline] ||= "0"
+        line[:taxdateline] ||= "1900-01-01"
+        line[:discounted] ||= false
+        line[:taxincluded] ||= false
+      end
+
+
 
       # Subsitute template place holders with real values
       @soap = @template_adjust.result(binding)
@@ -290,10 +317,7 @@ module AvaTax
         end
 
       #Strip off outer layer of the hash - not needed
-      @response = @response[:adjust_tax_response]
-
-      #Return data to calling program
-      return @response
+      return @response[:adjust_tax_response][:adjust_tax_result]
       
       #Capture unexpected errors
       rescue Savon::Error => error
@@ -309,9 +333,15 @@ module AvaTax
       
       @service = 'PostTax'
       
-      #Extract data from document hash
-      xtract(document)
-
+      #create instance variables for each entry in input      
+      document.each do |k,v|
+        instance_variable_set("@#{k}",v)
+      end
+      #set required default values for missing required inputs
+      @hashcode = "0"
+      
+      
+      
       # Subsitute template place holders with real values
       @soap = @template_post.result(binding)
       if @debug
@@ -338,10 +368,8 @@ module AvaTax
         end
 
       #Strip off outer layer of the hash - not needed
-      @response = @response[:post_tax_response]
-
       #Return data to calling program
-      return @response
+      return @response[:post_tax_response][:post_tax_result]
       
       #Capture unexpected errors
       rescue Savon::Error => error
@@ -357,8 +385,12 @@ module AvaTax
       
       @service = 'CommitTax'
         
-      #Extract data from document hash
-      xtract(document)
+      #create instance variables for each entry in input      
+      document.each do |k,v|
+        instance_variable_set("@#{k}",v)
+      end
+      #set required default values for missing required inputs
+      #no required default values exist for committax
 
       # Subsitute template place holders with real values
       @soap = @template_commit.result(binding)
@@ -386,10 +418,8 @@ module AvaTax
         end
 
       #Strip off outer layer of the hash - not needed
-      @response = @response[:commit_tax_response]
-
       #Return data to calling program
-      return @response
+      return @response[:commit_tax_response][:commit_tax_result]
       
       #Capture unexpected errors
       rescue Savon::Error => error
@@ -404,8 +434,12 @@ module AvaTax
       
       @service = 'CancelTax'     
       
-      #Extract data from document hash
-      xtract(document)
+      #create instance variables for each entry in input      
+      document.each do |k,v|
+        instance_variable_set("@#{k}",v)
+      end
+      #set required default values for missing required inputs
+      #no required default values exist for canceltax
 
       # Subsitute template place holders with real values
       @soap = @template_cancel.result(binding)
@@ -433,11 +467,8 @@ module AvaTax
         end
 
       #Strip off outer layer of the hash - not needed
-      @response = @response[:cancel_tax_response]
-      
-      #Return data to calling program
-      return @response
-      
+      return @response[:cancel_tax_response][:cancel_tax_result]
+
       #Capture unexpected errors
       rescue Savon::Error => error
         abend(error)
@@ -451,8 +482,12 @@ module AvaTax
       
       @service = 'GetTaxHistory'
       
-      #Extract data from document hash
-      xtract(document)      
+      #create instance variables for each entry in input      
+      document.each do |k,v|
+        instance_variable_set("@#{k}",v)
+      end
+      #set required default values for missing required inputs
+      @detaillevel ||= "Tax"
 
       # Subsitute template place holders with real values
       @soap = @template_gettaxhistory.result(binding)
@@ -480,10 +515,8 @@ module AvaTax
         end
         
       #Strip off outer layer of the hash - not needed
-      @response = @response[:get_tax_history_response]
-      
-      #Return data to calling program
-      return @response
+      return @response[:get_tax_history_response][:get_tax_history_result]
+
       
       #Capture unexpected errors
       rescue Savon::Error => error
@@ -499,8 +532,18 @@ module AvaTax
       
       @service = 'ReconcileTaxHistory'      
       
-      #Extract data from document hash
-      xtract(document)      
+      #create instance variables for each entry in input      
+      document.each do |k,v|
+        instance_variable_set("@#{k}",v)
+      end
+      #set required default values for missing required inputs
+      @pagesize ||= "100"
+      @reconciled ||= false
+      @doctype ||= "SalesInvoice"
+      @docstatus ||= "Any"
+      @lastdoccode ||= ''
+
+           
 
       # Subsitute template place holders with real values
       @soap = @template_reconciletaxhistory.result(binding)
@@ -528,11 +571,8 @@ module AvaTax
         end
 
       #Strip off outer layer of the hash - not needed
-      @response = @response[:reconcile_tax_history_response]
-      
-      #Return data to calling program
-      return @response
-      
+      return @response[:reconcile_tax_history_response][:reconcile_tax_history_result]
+
       #Capture unexpected errors
       rescue Savon::Error => error
         abend(error)
@@ -546,8 +586,8 @@ module AvaTax
       
       @service = 'IsAuthorized'      
       
-      #Extract data from document hash
-      xtract(document)
+      #Read in the SOAP template
+      @operation = operation == nil ? "?" : operation
 
       # Subsitute real vales for template place holders
       @soap = @template_isauthorized.result(binding)
@@ -561,9 +601,7 @@ module AvaTax
         @response = @client.call(:is_authorized, xml: @soap).to_hash
 
       #Strip off outer layer of the hash - not needed
-      @response = @response[:is_authorized_response]
-
-      return @response
+      return @response[:is_authorized_response][:is_authorized_result]
       
       #Capture unexpected errors
       rescue Savon::Error => error
@@ -572,142 +610,6 @@ module AvaTax
     end
 
     private
-
-    ############################################################################################################
-    # valaddr - Validates an address using the Avatax Address Validation Service
-    ############################################################################################################
-    def valaddr
-      @x = 0
-      @addresses.each do |addresscode,line1,line2,line3,city,region,postalcode,country,taxregionid,latitude,longitude,textcase,coordinates,taxability|
-        @log.puts "#{Time.now}: Calling Address Validation Service for Address #{line1}, #{line2}, #{line3}, #{city}, #{region}, #{postalcode}, #{country}"
-        #Call the address validation service
-        @val_addr = AddrService.validate(addresscode,line1,line2,line3,city,region,postalcode,country,taxregionid,latitude,longitude,textcase,coordinates,taxability)
-        #Update address details with the validated results
-        @val_addr.each do
-          @addresses[@x][0] = @val_addr[:AddressCode]
-          @addresses[@x][1] = @val_addr[:Line1]
-          @addresses[@x][2] = @val_addr[:Line2]
-          @addresses[@x][3] = @val_addr[:Line3]
-          @addresses[@x][4] = @val_addr[:City]
-          @addresses[@x][5] = @val_addr[:Region]
-          @addresses[@x][6] = @val_addr[:PostalCode]
-          @addresses[@x][7] = @val_addr[:Country]
-          @addresses[@x][8] = @val_addr[:TaxRegionId]
-          @addresses[@x][9] = @val_addr[:Latitude]
-          @addresses[@x][10] = @val_addr[:Longitude]
-        end
-        @x += @x
-      end
-    end
-    
-    ############################################################################################################
-    # xtract - Extract data from document hash
-    ############################################################################################################
-    def xtract(document)
-
-      companycode = document[:companycode]
-      doctype = document[:doctype]
-      doccode = document[:doccode]     
-      docdate = document[:docdate]
-      docid = document[:docid]      
-      salespersoncode = document[:salespersoncode]
-      customercode = document[:customercode]
-      customerusagetype = document[:customerusagetype]     
-      discount = document[:discount]             
-      purchaseorderno = document[:purchaseorderno]
-      exemptionno = document[:exemptionno]
-      origincode = document[:origincode]     
-      destinationcode = document[:destinationcode]
-      addresses = document[:addresses]
-      lines = document[:lines]
-      detaillevel = document[:detaillevel]     
-      referencecode = document[:referencecode]
-      hashcode = document[:hashcode]
-      locationcode = document[:locationcode]
-      commit = document[:commit]
-      batchcode = document[:batchcode]
-      taxoverridetype = document[:taxoverridetype]
-      taxamount = document[:taxamount]
-      taxdate = document[:taxdate]
-      reason = document[:reason]
-      currencycode = document[:currencycode]
-      servicemode = document[:servicemode]
-      paymentdate = document[:paymentdate]
-      exchangerate = document[:exchangerate]
-      exchangerateeffdate = document[:exchangerateeffdate]
-      poslanecode = document[:poslanecode]
-      businessidentificationno = document[:businessidentificationno]
-      adjustmentreason = document[:adjustmentreason]
-      adjustmentdescription = document[:adjustmentdescription] 
-      totalamount = document[:totalamount]
-      totaltax = document[:totaltax]
-      newdoccode = document[:newdoccode]
-      lastdocid = document[:lastdocid] 
-      reconciled = document[:reconciled]
-      startdate = document[:startdate]
-      enddate = document[:enddate]                 
-      docstatus = document[:docstatus]      
-      lastdoccode = document[:lastdoccode]
-      cancelcode = document[:cancelcode]
-      pagesize = document[:pagesize]
-      debug = document[:debug]
-      validate = document[:validate]
-      message = document[:message]
-      operation = document[:operation]
-      
-      #Set parms passed by user - If Nil then default else use passed value
-      @companycode = companycode == nil ? "" : companycode
-      @doctype = doctype == nil ? "" : doctype
-      @doccode = doccode == nil ? "" : doccode
-      @docdate = docdate == nil ? "" : docdate
-      @docid = docid == nil ? "" : docid      
-      @salespersoncode = salespersoncode == nil ? "" : salespersoncode
-      @customercode = customercode == nil ? "" : customercode
-      @customerusagetype = customerusagetype == nil ? "" : customerusagetype
-      @discount = discount == nil ? "" : discount
-      @purchaseorderno = purchaseorderno == nil ? "" : purchaseorderno
-      @exemptionno = exemptionno == nil ? "" : exemptionno
-      @origincode = origincode == nil ? "" : origincode
-      @destinationcode = destinationcode == nil ? "" : destinationcode
-      @addresses = addresses == nil ? "" : addresses
-      @lines = lines == nil ? "" : lines
-      @detaillevel = detaillevel == nil ? "" : detaillevel
-      @referencecode = referencecode == nil ? "" : referencecode
-      @hashcode = hashcode == nil ? "" : hashcode
-      @locationcode = locationcode == nil ? "" : locationcode
-      @commit = commit == nil ? "" : commit
-      @batchcode = batchcode == nil ? "" : batchcode
-      @taxoverridetype = taxoverridetype == nil ? "" : taxoverridetype
-      @taxamount = taxamount == nil ? "" : taxamount
-      @taxdate = taxdate == nil ? "" : taxdate
-      @reason = reason == nil ? "" : reason
-      @currencycode = currencycode == nil ? "" : currencycode
-      @servicemode = servicemode == nil ? "" : servicemode
-      @paymentdate = paymentdate == nil ? "" : paymentdate
-      @exchangerate = exchangerate == nil ? "" : exchangerate
-      @exchangerateeffdate = exchangerateeffdate == nil ? "" : exchangerateeffdate
-      @poslanecode = poslanecode == nil ? "" : poslanecode
-      @businessidentificationno = businessidentificationno == nil ? "" : businessidentificationno
-      @validate = validate == nil ? false : validate
-      @adjustmentreason = adjustmentreason == nil ? "" : adjustmentreason
-      @adjustmentdescription = adjustmentdescription == nil ? "" : adjustmentdescription
-      @totalamount = totalamount == nil ? "" : totalamount
-      @totaltax = totaltax == nil ? "" : totaltax
-      @newdoccode = newdoccode == nil ? "" : newdoccode
-      @cancelcode = cancelcode == nil ? "" : cancelcode
-      @detaillevel = detaillevel == nil ? "" : detaillevel
-      @lastdocid = lastdocid == nil ? "" : lastdocid
-      @reconciled = reconciled == nil ? "" : reconciled
-      @startdate = startdate == nil ? "" : startdate
-      @enddate = enddate == nil ? "" : enddate
-      @docstatus = docstatus == nil ? "" : docstatus
-      @lastdoccode = lastdoccode == nil ? "" : lastdoccode
-      @pagesize = pagesize == nil ? "" : pagesize
-      @debug = debug == nil ? false : debug
-      @ping_message = message
-      @operation = operation
-      
-    end
   
     ############################################################################################################
     # abend - Unexpected error handling

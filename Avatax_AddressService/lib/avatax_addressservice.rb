@@ -14,7 +14,10 @@ module AvaTax
       
       #Extract data from hash
       username = credentials[:username]
-      password = credentials[:password]      
+      password = credentials[:password]  
+      if username.nil? and password.nil?   
+        raise ArgumentError, "username and password are required"
+      end
       name = credentials[:name]
       clientname = credentials[:clientname]
       adapter = credentials[:adapter]      
@@ -25,7 +28,7 @@ module AvaTax
       @username = username == nil ? "" : username
       @password = password == nil ? "" : password
       @name = name == nil ? "" : name
-      @clientname = (clientname == nil or clientname == "") ? "Avatax Address Service SDK for Ruby Default Client Name" : clientname
+      @clientname = (clientname == nil or clientname == "") ? "AvataxRubySDK" : clientname
       @adapter = (adapter == nil or adapter == "") ? spec.summary + spec.version.to_s : adapter
       @machine = machine == nil ? "" : machine
       @use_production_account = (use_production_account != true) ? false : use_production_account
@@ -73,7 +76,7 @@ module AvaTax
     ############################################################################################################
     # ping - Verifies connectivity to the web service and returns version information
     ############################################################################################################
-    def ping(message)
+    def ping(message = nil)
       
       @service = 'Ping'
       
@@ -88,7 +91,7 @@ module AvaTax
         @response = @client.call(:ping, xml: @soap).to_hash
 
       #Strip off outer layer of the hash - not needed
-      @response = @response[:ping_response]
+      @response = @response[:ping_response][:ping_result]
 
       return @response
       
@@ -104,40 +107,18 @@ module AvaTax
     def validate(address)
 
       @service = 'Validate'
-
-      #Extract data from hash
-      addresscode = address[:addresscode]
-      line1 = address[:line1]
-      line2 = address[:line2]
-      line3 = address[:line3]
-      city = address[:city]
-      region = address[:region]
-      postalcode = address[:postalcode]
-      country = address[:country]
-      taxregionid = address[:taxregionid]
-      latitude = address[:latitude]
-      longitude = address[:longitude]
-      textcase = address[:textcase]
-      coordinates = address[:coordinates]
-      taxability = address[:taxability]
-
-      #Set parms passed by user - If Nil then default else use passed value
-      @addresscode = addresscode == nil ? "123" : addresscode
-      @line1 = line1 == nil ? "" : line1
-      @line2 = line2 == nil ? "" : line2
-      @line3 = line3 == nil ? "" : line3
-      @city = city == nil ? "" : city
-      @region = region == nil ? "" : region
-      @postalcode = postalcode == nil ? "" : postalcode
-      @country = country == nil ? "" : country
-      @taxregionid = taxregionid == nil ? "0" : taxregionid
-      @latitude = latitude == nil ? "" : latitude
-      @longitude = longitude == nil ? "" : longitude
-      @textcase = textcase == nil ? "Default" : textcase
-      @coordinates = coordinates == nil ? "true" : coordinates
-      @taxability = taxability == nil ? "false" : taxability
-
-      # Subsitute real vales for template place holders
+      
+      #create instance variables for each entry in input      
+      address.each do |k,v|
+        instance_variable_set("@#{k}",v)
+      end
+      #set required default values for missing required inputs
+      @taxregionid ||= "0"
+      @textcase ||= "Default"
+      @coordinates ||= false 
+      @taxability ||= false 
+      
+      # Subsitute real values for template place holders
       @soap = @template_validate.result(binding)
 
       # Make the call to the Avalara Validate service
@@ -145,7 +126,7 @@ module AvaTax
         @response = @client.call(:validate, xml: @soap).to_hash
 
       #Strip off outer layer of the hash - not needed
-      @response = @response[:validate_response]
+      @response = @response[:validate_response][:validate_result]
       
       #Return data to calling program
       return @response
@@ -159,7 +140,7 @@ module AvaTax
     ############################################################################################################
     #Verifies connectivity to the web service and returns version information about the service.
     ############################################################################################################
-    def isauthorized(operation)
+    def isauthorized(operation = nil)
       
       @service = 'IsAuthorized'
       
@@ -174,7 +155,7 @@ module AvaTax
         @response = @client.call(:is_authorized, xml: @soap).to_hash
 
       #Strip off outer layer of the hash - not needed
-      @response = @response[:is_authorized_response]
+      @response = @response[:is_authorized_response][:is_authorized_result]
       
       return @response
       

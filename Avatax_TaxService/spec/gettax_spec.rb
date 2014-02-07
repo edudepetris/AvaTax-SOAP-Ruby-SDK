@@ -3,9 +3,16 @@ require "date"
 
 describe "GetTax" do
   before :each do
+    credentials = YAML::load(File.open('credentials.yml'))
+    @creds = {:username => credentials['username'], 
+          :password => credentials['password'],  
+          :clientname => credentials['clientname'],
+          :use_production_url => credentials['production']}
+    @companycode = credentials['companycode']
+    @svc = AvaTax::TaxService.new(@creds)
+    
     @request_required = {
       :doctype => "SalesOrder",
-      :detaillevel => "Tax",
       :docdate=>DateTime.now.strftime("%Y-%m-%d"),
       :customercode => "CUST123",
       :origincode => "456",
@@ -15,7 +22,6 @@ describe "GetTax" do
         :line1=>"7070 West Arlington Drive", 
         :postalcode=>"80123", 
         :country=>"US", 
-        :taxregionid=>"0"
         }], 
       :lines=>[{
         :no=>"1", 
@@ -23,13 +29,13 @@ describe "GetTax" do
         :qty=>"1",
         :amount=>"300.43", 
         :description=>"Blue canoe",
-        :discounted => false,
         }]
       
     }
     @request_optional = {
-      :companycode => "SDK", #TODO change to generic val
+      :companycode => @companycode,
       :salespersoncode => "Bill Sales",
+      :detaillevel => "Tax",
       :customerusagetype => "L",
       :discount => "10",
       :purchaseorderno => "PO9823",
@@ -84,16 +90,16 @@ describe "GetTax" do
           :ref1=>"ref1", 
           :ref2=>"ref2", 
           :description=>"Blue canoe",
-            :taxoverridetype=>"TaxAmount", 
-            :taxamount=>"10", 
-            :taxdate=>"1900-01-01", 
-            :reason=>"Tax credit", 
+            :taxoverridetypeline=>"TaxAmount", 
+            :taxamountline=>"10", 
+            :taxdateline=>"1900-01-01", 
+            :reasonline=>"Tax credit", 
           :taxincluded=>"false" 
           }, {
           :no=>"2", 
           :itemcode=>"Rowing boat", 
           :qty=>"1", 
-          :destinationcode=>"123",
+          :destinationcodeline=>"123",
           :amount=>"800.12", 
           :discounted=>"false", 
           :ref1=>"ref3", 
@@ -106,10 +112,7 @@ describe "GetTax" do
           }]
     }
 
-    @creds = {:username => "account.admin.1100014690", 
-          :password => "avalara",  
-          :clientname => "AvaTaxCalcSOAP Ruby Sample",
-          :use_production_url => false}
+
           
   end
   
@@ -139,20 +142,9 @@ describe "GetTax" do
       @service = AvaTax::TaxService.new(@creds)
       @service.gettax(@request_required)[:result_code].should eql "Success"
     end   
-    it "error when internet is unavailable" do
-      pending "not yet implemented"
-    end    
   end
   
-  describe "has consistant formatting for" do
-    it "internal logic errors" do
-      pending
-      @service = AvaTax::TaxService.new(@creds)
-      lambda { @service.gettax(@request_required) }.should raise_exception
-    end
-    it "transmission errors" do
-      pending "should be similar to internet unavailable"
-    end
+  describe "has consistent formatting for" do
     it "server-side errors" do
       @creds[:password] = nil
       @service = AvaTax::TaxService.new(@creds)
@@ -174,11 +166,11 @@ describe "GetTax" do
       @result = @service.gettax(@request_optional)
       @result[:result_code].should eql "Error" 
     end
-    it "invalid parameters fail" do
+    it "invalid parameters ignore them" do
       @service = AvaTax::TaxService.new(@creds)
       @request_required[:bogus] = "data"
       @result = @service.gettax(@request_required)
-      @result[:result_code].should eql "Error" 
+      @result[:result_code].should eql "Success" 
     end
     it "missing optional parameters succeed" do
       @service = AvaTax::TaxService.new(@creds)
@@ -191,7 +183,99 @@ describe "GetTax" do
       @result[:result_code].should eql "Success" 
     end
   end
-  describe "workflow cases" do
+  describe "workflow" do
+    it "should calculate tax without recording a document" do
+      @request = @request_required
+      @request[:doctype] = "SalesOrder"
+      @request[:companycode] = @companycode
+      @result = @svc.gettax(@request)      
+      @history_request = { 
+        :doccode => @result[:doc_code],
+        :companycode => @request[:companycode],
+        :doctype => @request[:doctype],
+      }
+      @history_result = @svc.gettaxhistory(@history_request)
+      @result[:result_code].should eql "Success" and 
+      @history_result[:result_code].should eql "Error" and
+      @history_result[:messages][:message][:summary].should eql "The tax document could not be found."
+    end
+    it "should record a document as uncommitted" do
+      @request = @request_required
+      @request[:doctype] = "SalesInvoice"
+      @request[:commit] = false
+      @request[:companycode] = @companycode
+      @result = @svc.gettax(@request)      
+      @history_request = { 
+        :doccode => @result[:doc_code],
+        :companycode => @request[:companycode],
+        :doctype => @request[:doctype],
+      }
+      @history_result = @svc.gettaxhistory(@history_request)
+      @result[:result_code].should eql "Success" and 
+      @history_result[:result_code].should eql "Success" and
+      @history_result[:get_tax_result][:doc_status].should eql "Saved"
+    end
+    it "should record a document as committed" do
+      @request = @request_required
+      @request[:doctype] = "SalesInvoice"
+      @request[:commit] = true
+      @request[:companycode] = @companycode
+      @result = @svc.gettax(@request)      
+      @history_request = { 
+        :doccode => @result[:doc_code],
+        :companycode => @request[:companycode],
+        :doctype => @request[:doctype],
+      }
+      @history_result = @svc.gettaxhistory(@history_request)
+      @result[:result_code].should eql "Success" and 
+      @history_result[:result_code].should eql "Success" and
+      @history_result[:get_tax_result][:doc_status].should eql "Committed"
+    end
+    it "should update uncommitted documents" do
+      @request = @request_required
+      @request[:doctype] = "SalesInvoice"
+      @request[:commit] = false
+      @request[:companycode] = @companycode
+      @result_initial = @svc.gettax(@request) 
+
+      @request[:customercode] = "NEWCUST"
+      @request[:doccode] = @result_initial[:doc_code]
+      @result = @svc.gettax(@request)     
+      @history_request = { 
+        :doccode => @result_initial[:doc_code],
+        :companycode => @request[:companycode],
+        :doctype => @request[:doctype],
+      }
+      @history_result = @svc.gettaxhistory(@history_request)
+      @result_initial[:result_code].should eql "Success" and
+      @result[:result_code].should eql "Success" and 
+      @history_result[:result_code].should eql "Success" and
+      @history_result[:get_tax_result][:doc_status].should eql "Saved" and
+      @history_result[:get_tax_request][:customer_code].should eql @request[:customercode]    
+    end
+    it "should not update committed documents" do
+      @request = @request_required
+      @old_customer_code = @request_required[:customercode]
+      @request[:doctype] = "SalesInvoice"
+      @request[:commit] = true
+      @request[:companycode] = @companycode
+      @result_initial = @svc.gettax(@request) 
+
+      @request[:customercode] = "NEWCUST"
+      @request[:doccode] = @result_initial[:doc_code]
+      @result = @svc.gettax(@request)     
+      @history_request = { 
+        :doccode => @result_initial[:doc_code],
+        :companycode => @request[:companycode],
+        :doctype => @request[:doctype],
+      }
+      @history_result = @svc.gettaxhistory(@history_request)
+      @result_initial[:result_code].should eql "Success" and
+      @result[:result_code].should eql "Error" and 
+      @history_result[:result_code].should eql "Success" and
+      @history_result[:get_tax_result][:doc_status].should eql "Committed" and
+      @history_result[:get_tax_request][:customer_code].should eql @old_customer_code   
+    end
   end
   
 end
