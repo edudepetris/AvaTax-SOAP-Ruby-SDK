@@ -34,19 +34,13 @@ describe "IsAuthorized" do
       @creds[:clientname] = nil
       @service = AvaTax::AddressService.new(@creds)
       @service.isauthorized[:result_code].should eql "Success"
-    end   
-    it "error when internet is unavailable" do
-      pending "not yet implemented"
-    end    
+    end     
   end
   
   describe "has consistent formatting for" do
     it "internal logic errors" do
       @service = AvaTax::AddressService.new(@creds)
       lambda { @service.isauthorized("param1","param2") }.should raise_exception
-    end
-    it "transmission errors" do
-      pending "should be similar to internet unavailable"
     end
     it "server-side errors" do
       @creds[:password] = nil

@@ -50,17 +50,11 @@ describe "Validate" do
       @service = AvaTax::AddressService.new(@creds)
       @service.validate(@address_req)[:result_code].should eql "Success"
     end   
-    it "error when internet is unavailable" do
-      pending "not yet implemented"
-    end    
   end
   
   describe "has consistent formatting for" do
     it "internal logic errors" do
       lambda { @svc.validate(@address_req, @address_req) }.should raise_exception
-    end
-    it "transmission errors" do
-      pending "should be similar to internet unavailable"
     end
     it "server-side errors" do
       @creds[:password] = nil
@@ -76,11 +70,6 @@ describe "Validate" do
   describe "requests with" do
     it "missing required parameters fail" do
       @address_req[:line1] = nil
-      @svc.validate(@address_req)[:result_code].should eql "Error"
-    end
-    it "invalid parameters fail" do
-      pending "Not sure this is required"
-      @address_req[:bogus] = "data"
       @svc.validate(@address_req)[:result_code].should eql "Error"
     end
     it "missing optional parameters succeed" do
