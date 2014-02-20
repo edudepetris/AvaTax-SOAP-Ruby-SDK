@@ -25,10 +25,10 @@ svc = AvaTax::TaxService.new(:username => credentials['username'],
 result = svc.posttax(request)
 
 #Display the result
-print "PostTax ResultCode: "+result[:result_code]+"\n"
+puts "PostTax ResultCode: "+result[:result_code]
 
 #If we encountered an error
 if result[:result_code] != "Success"
   #Print the first error message returned
-  print result[:messages][:message][0][:summary]+"\n"
+  puts result[:messages][:message][0][:summary]
 end

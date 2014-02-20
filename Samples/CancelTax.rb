@@ -1,4 +1,4 @@
-require_relative 'Avatax_TaxService/lib/avatax_taxservice.rb'
+require 'Avatax_TaxService'
 require 'yaml'
 
 #Create an instance of the service class
@@ -18,10 +18,10 @@ svc = AvaTax::TaxService.new(:username => credentials['username'],
   #Call the service
 result = svc.canceltax(request)
 #Display the result
-print "CancelTax ResultCode: "+result[:result_code]+"\n"
+puts "CancelTax ResultCode: "+result[:result_code]
 
 #If we encountered an error
 if result[:result_code] != "Success"
   #Print the first error message returned
-  print result[:details]+"\n"
+  puts result[:details]
 end

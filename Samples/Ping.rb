@@ -15,10 +15,10 @@ result = svc.ping
 #print result
 
 #Display the result
-print "Ping ResultCode: "+result[:result_code]+"\n"
+puts "Ping ResultCode: "+result[:result_code]
 
 #If we encountered an error
 if result[:result_code] != "Success"
   #Print the first error message returned
-  print result[:details]+"\n"
+  puts result[:details]
 end
