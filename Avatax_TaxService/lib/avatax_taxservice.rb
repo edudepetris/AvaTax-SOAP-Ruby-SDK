@@ -156,7 +156,7 @@ module AvaTax
         end
       
       #Strip off outer layer of the hash - not needed
-      @response = @response[:ping_response][:ping_result]
+      @response = messages_to_array(@response[:ping_response][:ping_result])
           
       return @response
     
@@ -236,7 +236,7 @@ module AvaTax
         end
 
       #Strip off outer layer of the hash - not needed
-      @response = @response[:get_tax_response][:get_tax_result]
+      @response = messages_to_array(@response[:get_tax_response][:get_tax_result])
 
       #Return data to calling program
       return @response
@@ -317,7 +317,7 @@ module AvaTax
         end
 
       #Strip off outer layer of the hash - not needed
-      return @response[:adjust_tax_response][:adjust_tax_result]
+      return messages_to_array(@response[:adjust_tax_response][:adjust_tax_result])
       
       #Capture unexpected errors
       rescue Savon::Error => error
@@ -369,7 +369,7 @@ module AvaTax
 
       #Strip off outer layer of the hash - not needed
       #Return data to calling program
-      return @response[:post_tax_response][:post_tax_result]
+      return messages_to_array(@response[:post_tax_response][:post_tax_result])
       
       #Capture unexpected errors
       rescue Savon::Error => error
@@ -419,7 +419,7 @@ module AvaTax
 
       #Strip off outer layer of the hash - not needed
       #Return data to calling program
-      return @response[:commit_tax_response][:commit_tax_result]
+      return messages_to_array(@response[:commit_tax_response][:commit_tax_result])
       
       #Capture unexpected errors
       rescue Savon::Error => error
@@ -467,7 +467,7 @@ module AvaTax
         end
 
       #Strip off outer layer of the hash - not needed
-      return @response[:cancel_tax_response][:cancel_tax_result]
+      return messages_to_array(@response[:cancel_tax_response][:cancel_tax_result])
 
       #Capture unexpected errors
       rescue Savon::Error => error
@@ -515,7 +515,7 @@ module AvaTax
         end
         
       #Strip off outer layer of the hash - not needed
-      return @response[:get_tax_history_response][:get_tax_history_result]
+      return messages_to_array(@response[:get_tax_history_response][:get_tax_history_result])
 
       
       #Capture unexpected errors
@@ -571,7 +571,7 @@ module AvaTax
         end
 
       #Strip off outer layer of the hash - not needed
-      return @response[:reconcile_tax_history_response][:reconcile_tax_history_result]
+      return messages_to_array(@response[:reconcile_tax_history_response][:reconcile_tax_history_result])
 
       #Capture unexpected errors
       rescue Savon::Error => error
@@ -601,7 +601,7 @@ module AvaTax
         @response = @client.call(:is_authorized, xml: @soap).to_hash
 
       #Strip off outer layer of the hash - not needed
-      return @response[:is_authorized_response][:is_authorized_result]
+      return messages_to_array(@response[:is_authorized_response][:is_authorized_result])
       
       #Capture unexpected errors
       rescue Savon::Error => error
@@ -621,8 +621,29 @@ module AvaTax
       @response[:result_code] = 'Error'
       @response[:summary] = @response[:fault][:faultcode]
       @response[:details] = @response[:fault][:faultstring]   
-      return @response
+      return messages_to_array(@response)
     end
-  
+    ############################################################################################################
+    #standardizes error message format to an array of messages - nokogiri will collapse a single element array into the response hash.
+    ############################################################################################################
+    def messages_to_array(response)
+      if not response[:messages].nil? 
+        return response
+      end
+      # add the messages array to the response - if we got here, there was only one error.
+      response[:messages] = [{
+        :summary => response[:summary],
+        :details => response[:details],
+        :helplink => response[:helplink],
+        :refersto => response[:refersto],
+        :severity => response[:severity],
+        :source => response[:source]
+        }]
+      #remove all the error information from the hash  
+      response[:messages][0].each do |k,v|
+        response.delete(k)
+      end  
+      return response
+    end
   end
 end  
