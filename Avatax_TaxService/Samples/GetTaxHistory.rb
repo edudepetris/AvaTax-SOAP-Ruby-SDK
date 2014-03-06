@@ -15,7 +15,7 @@ svc = AvaTax::TaxService.new(:username => credentials['username'],
     :doctype=>"SalesInvoice", #Required
     :docid=> "",              #Optional
     :detaillevel=>"Tax",      #Optional
-    :debug => false           #Optional
+    :debug => true           #Optional
     }
   #Call the service
 result = svc.gettaxhistory(request)
