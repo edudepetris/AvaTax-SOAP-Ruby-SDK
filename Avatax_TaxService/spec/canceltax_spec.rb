@@ -74,7 +74,9 @@ describe "CancelTax" do
       @creds[:password] = nil
       @service = AvaTax::TaxService.new(@creds)
       @result = @service.canceltax(@request_required)
-      @result[:result_code].should eql "Error" and @result[:details].should eql "The user or account could not be authenticated."
+      @result[:result_code].should eql "Error" and       
+      @result[:messages].kind_of?(Array).should eql true and
+      @result[:messages][0].should include(:details => "The user or account could not be authenticated.")
     end
     it "successful results" do
       @service = AvaTax::TaxService.new(@creds)

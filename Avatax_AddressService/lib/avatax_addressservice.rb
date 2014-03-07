@@ -91,9 +91,8 @@ module AvaTax
         @response = @client.call(:ping, xml: @soap).to_hash
 
       #Strip off outer layer of the hash - not needed
-      @response = @response[:ping_response][:ping_result]
+      return messages_to_array(@response[:ping_response][:ping_result])
 
-      return @response
       
       #Capture unexpected errors
       rescue Savon::Error => error
@@ -126,10 +125,8 @@ module AvaTax
         @response = @client.call(:validate, xml: @soap).to_hash
 
       #Strip off outer layer of the hash - not needed
-      @response = @response[:validate_response][:validate_result]
-      
-      #Return data to calling program
-      return @response
+      return messages_to_array(@response[:validate_response][:validate_result])
+
       
       #Capture unexpected errors
       rescue Savon::Error => error
@@ -155,9 +152,7 @@ module AvaTax
         @response = @client.call(:is_authorized, xml: @soap).to_hash
 
       #Strip off outer layer of the hash - not needed
-      @response = @response[:is_authorized_response][:is_authorized_result]
-      
-      return @response
+      return messages_to_array(@response[:is_authorized_response][:is_authorized_result])
       
       #Capture unexpected errors
       rescue Savon::Error => error
@@ -176,7 +171,30 @@ module AvaTax
       @response[:result_code] = 'Error'
       @response[:summary] = @response[:fault][:faultcode]
       @response[:details] = @response[:fault][:faultstring]   
-      return @response
+      return messages_to_array(@response)
+    end
+    
+    ############################################################################################################
+    #standardizes error message format to an array of messages - nokogiri will collapse a single element array into the response hash.
+    ############################################################################################################
+    def messages_to_array(response)
+      if not response[:messages].nil? 
+        return response
+      end
+      # add the messages array to the response - if we got here, there was only one error.
+      response[:messages] = [{
+        :summary => response[:summary],
+        :details => response[:details],
+        :helplink => response[:helplink],
+        :refersto => response[:refersto],
+        :severity => response[:severity],
+        :source => response[:source]
+        }]
+      #remove all the error information from the hash  
+      response[:messages][0].each do |k,v|
+        response.delete(k)
+      end  
+      return response
     end
   end
 end
