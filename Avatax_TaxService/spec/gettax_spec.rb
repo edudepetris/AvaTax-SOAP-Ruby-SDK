@@ -58,9 +58,6 @@ describe "GetTax" do
       :debug => false,
       :validate => false,
       :hashcode => "0",
-      :taxoverridetype=>"None", 
-      :taxamount=>".0000", 
-      :taxdate=>"1900-01-01", 
       :reason=>"", 
       :addresses=>[{
         :addresscode=>"123", 
@@ -182,7 +179,7 @@ describe "GetTax" do
     it "all parameters succeed" do
       @service = AvaTax::TaxService.new(@creds)
       @result = @service.gettax(@request_required.merge(@request_optional))
-      @result[:result_code].should eql "Success" 
+      @result.should eql "Success" 
     end
   end
   describe "workflow" do
