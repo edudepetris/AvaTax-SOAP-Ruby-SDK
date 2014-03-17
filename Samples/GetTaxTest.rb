@@ -136,11 +136,7 @@ getTaxResult = taxSvc.gettax(getTaxRequest)
 # Print Results
 puts "GetTaxTest ResultCode: " + getTaxResult[:result_code]
 if getTaxResult[:result_code] != "Success"
-  if getTaxResult[:messages][0].nil? 
-    puts getTaxResult[:messages][:message][:summary]
-  else
     getTaxResult[:messages].each { |message| puts message[:details] }
-  end
 else
   puts "Document Code: " + getTaxResult[:doc_code] + 
     " Total Tax: " + getTaxResult[:total_tax].to_s
