@@ -1,8 +1,9 @@
 require_relative '../Avatax_AddressService/lib/avatax_addressservice.rb'
+
 #require 'Avatax_AddressService'
 
-accountNumber = "1234567890"
-licenseKey = "A1B2C3D4E5F6G7H8"
+accountNumber = "wilsongs"
+licenseKey = "Gsw98110"
 useProductionURL = false
 
 # Header Level Parameters
