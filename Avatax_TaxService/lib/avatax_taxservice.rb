@@ -44,7 +44,7 @@ module AvaTax
       #Get service details from WSDL - control_array[2] contains the WSDL read from the address_control file
       #log :false turns off HTTP logging. Select either Dev or Prod depending on the value of the boolean value 'use_production_account'
       @log.puts "#{Time.now}: Avalara Tax service started"
-      @client = Savon.client(wsdl: @def_locn + '/taxservice.wsdl', endpoint: URI.parse(service_url+"/Address/AddressSvc.asmx"), log: false)
+      @client = Savon.client(wsdl: @def_locn + '/taxservice.wsdl', endpoint: URI.parse(service_url+"/Tax/TaxSvc.asmx"), log: false)
 
 
 
