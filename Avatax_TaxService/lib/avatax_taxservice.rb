@@ -12,29 +12,28 @@ module AvaTax
       #Set @def_locn to the Avatax-x.x.x gem install library. This enables the ruby programs to
       #find other objects that it needs.      
       gem_root = spec.gem_dir
-      @def_locn = gem_root + "/lib"    
+      @def_locn = "../lib"#gem_root + "/lib"    
 
-      #Extract data from hash
-      username = credentials[:username]
-      password = credentials[:password]
-      if username.nil? and password.nil?   
-        raise ArgumentError, "username and password are required"
+#Extract data from hash
+      username = credentials[:username] || ""
+      password = credentials[:password] || ""
+      service_url = credentials[:service_url]   
+      if service_url.nil? or service_url.empty?
+        raise ArgumentError, "service_url is required"
       end
-      name = credentials[:name]
-      clientname = credentials[:clientname]
-      adapter = credentials[:adapter]
-      machine = credentials[:machine]
-      use_production_account = credentials[:use_production_account]
+      name = credentials[:name] || ""
+      clientname = (credentials[:clientname].nil? or credentials[:clientname].empty? ) ? "AvataxRubySDK" : credentials[:clientname]
+      adapter = (credentials[:adapter].nil? or credentials[:adapter].empty?) ? spec.summary + spec.version.to_s : credentials[:adapter] 
+      machine = credentials[:machine] || ""
 
+      
       #Set credentials and Profile information
-      @username = username == nil ? "" : username
-      @password = password == nil ? "" : password
-      @name = name == nil ? "" : name
-      @clientname = (clientname == nil or clientname == "") ? "Avatax SDK for Ruby Default Client Name" : clientname
-      @adapter = (adapter == nil or adapter == "") ? spec.summary + spec.version.to_s : adapter
-      @machine = machine == nil ? "" : machine
-      @use_production_account = (use_production_account != true) ? false : use_production_account
-
+      @username = username 
+      @password = password 
+      @name = name
+      @clientname = clientname
+      @adapter = adapter
+      @machine = machine 
 
       #Header for response data
       @responsetime_hdr = "  (User)    (System)    (Total)    (Real)"
@@ -44,13 +43,9 @@ module AvaTax
 
       #Get service details from WSDL - control_array[2] contains the WSDL read from the address_control file
       #log :false turns off HTTP logging. Select either Dev or Prod depending on the value of the boolean value 'use_production_account'
-      if @use_production_account
-        @log.puts "#{Time.now}: Avalara Production Tax service started"
-        @client = Savon.client(wsdl: @def_locn + '/taxservice_prd.wsdl', log: false)
-      else
-        @log.puts "#{Time.now}: Avalara Development Tax service started"
-        @client = Savon.client(wsdl: @def_locn + '/taxservice_dev.wsdl', log: false)        
-      end
+      @log.puts "#{Time.now}: Avalara Tax service started"
+      @client = Savon.client(wsdl: @def_locn + '/taxservice.wsdl', endpoint: URI.parse(service_url+"/Address/AddressSvc.asmx"), log: false)
+
 
 
       #Read in the SOAP template for Get tax
