@@ -12,7 +12,7 @@ module AvaTax
       #Set @def_locn to the Avatax-x.x.x gem install library. This enables the ruby programs to
       #find other objects that it needs.      
       gem_root = spec.gem_dir
-      @def_locn = "../lib"#gem_root + "/lib"    
+      @def_locn = gem_root + "/lib"    
 
 #Extract data from hash
       username = credentials[:username] || ""
