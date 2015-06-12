@@ -13,40 +13,34 @@ module AvaTax
       @def_locn = gem_root + "/lib"
       
       #Extract data from hash
-      username = credentials[:username]
-      password = credentials[:password]  
-      if username.nil? and password.nil?   
-        raise ArgumentError, "username and password are required"
+      username = credentials[:username] || ""
+      password = credentials[:password] || ""
+      service_url = credentials[:service_url]   
+      if service_url.nil? or service_url.empty?
+        raise ArgumentError, "service_url is required"
       end
-      name = credentials[:name]
-      clientname = credentials[:clientname]
-      adapter = credentials[:adapter]      
-      machine = credentials[:machine] 
-      use_production_account = credentials[:use_production_account]     
+      name = credentials[:name] || ""
+      clientname = (credentials[:clientname].nil? or credentials[:clientname].empty? ) ? "AvataxRubySDK" : credentials[:clientname]
+      adapter = (credentials[:adapter].nil? or credentials[:adapter].empty?) ? spec.summary + spec.version.to_s : credentials[:adapter] 
+      machine = credentials[:machine] || ""
+
       
       #Set credentials and Profile information
-      @username = username == nil ? "" : username
-      @password = password == nil ? "" : password
-      @name = name == nil ? "" : name
-      @clientname = (clientname == nil or clientname == "") ? "AvataxRubySDK" : clientname
-      @adapter = (adapter == nil or adapter == "") ? spec.summary + spec.version.to_s : adapter
-      @machine = machine == nil ? "" : machine
-      @use_production_account = (use_production_account != true) ? false : use_production_account
+      @username = username 
+      @password = password 
+      @name = name
+      @clientname = clientname
+      @adapter = adapter
+      @machine = machine 
 
       #Open Avatax Error Log
       @log = File.new(@def_locn + '/address_log.txt', "w")
       
       #Get service details from WSDL - control_array[2] contains the WSDL read from the address_control file
       #log :false turns off HTTP logging. Select either Dev or Prod depending on the value of the boolean value 'use_production_account'
-      if @use_production_account
-        @log.puts "#{Time.now}: Avalara Production Address service started"
-        #log :false turns off HTTP logging
-        @client = Savon.client(wsdl: @def_locn + '/addressservice_prd.wsdl', log: false)
-      else
-        @log.puts "#{Time.now}: Avalara Development Address service started"
-        #log :false turns off HTTP logging
-        @client = Savon.client(wsdl: @def_locn + '/addressservice_dev.wsdl', log: false)
-      end
+      @log.puts "#{Time.now}: Avalara Address service started"
+      #log :false turns off HTTP logging
+      @client = Savon.client(wsdl: @def_locn + '/addressservice.wsdl', endpoint: URI.parse(service_url+"/Address/AddressSvc.asmx"), log: false)
 
       begin
       #Read in the SOAP template for Ping
@@ -77,9 +71,7 @@ module AvaTax
     # ping - Verifies connectivity to the web service and returns version information
     ############################################################################################################
     def ping(message = nil)
-      
-      @service = 'Ping'
-      
+
       #Read in the SOAP template
       @message = message == nil ? "?" : message
 
@@ -104,8 +96,6 @@ module AvaTax
     # validate - call the adddress validation service
     ############################################################################################################
     def validate(address)
-
-      @service = 'Validate'
       
       #create instance variables for each entry in input      
       address.each do |k,v|
@@ -138,8 +128,6 @@ module AvaTax
     #Verifies connectivity to the web service and returns version information about the service.
     ############################################################################################################
     def isauthorized(operation = nil)
-      
-      @service = 'IsAuthorized'
       
       #Read in the SOAP template
       @operation = operation == nil ? "?" : operation

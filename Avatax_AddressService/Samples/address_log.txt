@@ -1,0 +1,4 @@
+2015-06-12 13:00:32 -0700: Avalara Development Address service started
+2015-06-12 13:00:32 -0700: Error loading the Ping template
+2015-06-12 13:00:32 -0700: Error loading the Validate template
+2015-06-12 13:00:32 -0700: Error loading the IsAuthorized template
